@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Task } from '../types.ts'
+import { OrganizeFields } from './OrganizeFields.tsx'
 
 type CaptureSheetProps = {
-  onSave: (title: string) => boolean
+  onSave: (
+    title: string,
+    init: { area: Task['area']; dueDate: Task['dueDate'] },
+  ) => boolean
   onClose: () => void
 }
 
 export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
   const [title, setTitle] = useState('')
+  const [area, setArea] = useState<Task['area']>(null)
+  const [dueDate, setDueDate] = useState<Task['dueDate']>(null)
   const [showHint, setShowHint] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -15,9 +22,11 @@ export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
   }, [])
 
   function submit() {
-    const ok = onSave(title)
+    const ok = onSave(title, { area, dueDate })
     if (ok) {
       setTitle('')
+      setArea(null)
+      setDueDate(null)
       setShowHint(false)
       onClose()
     } else {
@@ -64,6 +73,12 @@ export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
               Type a task title first.
             </p>
           ) : null}
+          <OrganizeFields
+            area={area}
+            dueDate={dueDate}
+            onAreaChange={setArea}
+            onDueDateChange={setDueDate}
+          />
           <div className="sheet-actions">
             <button type="button" className="sheet-cancel" onClick={onClose}>
               Cancel

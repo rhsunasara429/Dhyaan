@@ -1,15 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../types.ts'
+import { OrganizeFields } from './OrganizeFields.tsx'
+
+export type EditInput = {
+  title: string
+  area: Task['area']
+  dueDate: Task['dueDate']
+}
 
 type EditSheetProps = {
   task: Task
-  onSave: (id: string, title: string) => boolean
+  onSave: (id: string, patch: EditInput) => boolean
   onDelete: (id: string) => void
   onClose: () => void
 }
 
 export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
   const [title, setTitle] = useState(task.title)
+  const [area, setArea] = useState<Task['area']>(task.area)
+  const [dueDate, setDueDate] = useState<Task['dueDate']>(task.dueDate)
   const [showHint, setShowHint] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -19,11 +28,15 @@ export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
   }, [])
 
   function submit() {
-    if (title.trim() === task.title) {
+    if (
+      title.trim() === task.title &&
+      area === task.area &&
+      dueDate === task.dueDate
+    ) {
       onClose()
       return
     }
-    const ok = onSave(task.id, title)
+    const ok = onSave(task.id, { title, area, dueDate })
     if (ok) {
       onClose()
     } else {
@@ -97,6 +110,12 @@ export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
                 Type a task title first.
               </p>
             ) : null}
+            <OrganizeFields
+              area={area}
+              dueDate={dueDate}
+              onAreaChange={setArea}
+              onDueDateChange={setDueDate}
+            />
             <div className="sheet-actions">
               <button type="button" className="sheet-cancel" onClick={onClose}>
                 Cancel

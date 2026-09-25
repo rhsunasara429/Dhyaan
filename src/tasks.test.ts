@@ -5,6 +5,7 @@ import {
   MAX_TITLE_LENGTH,
   renameTask,
   toggleTask,
+  updateTask,
 } from './tasks.ts'
 import type { Task } from './types.ts'
 
@@ -160,5 +161,124 @@ describe('deleteTask', () => {
   it('leaves the collection unchanged for an unknown id', () => {
     const tasks = [makeTask('a')]
     expect(deleteTask(tasks, 'missing')).toEqual(tasks)
+  })
+})
+
+describe('buildTask with organization', () => {
+  it('creates a task with area and due date', () => {
+    const task = buildTask('Study', {
+      area: 'college',
+      dueDate: '2026-10-01',
+    })
+    expect(task?.area).toBe('college')
+    expect(task?.dueDate).toBe('2026-10-01')
+    expect(task?.done).toBe(false)
+    expect(task?.notes).toBeNull()
+  })
+
+  it('defaults area and due date to null', () => {
+    const task = buildTask('Study')
+    expect(task?.area).toBeNull()
+    expect(task?.dueDate).toBeNull()
+  })
+
+  it('rejects invalid area and date values', () => {
+    expect(
+      buildTask('Study', { area: 'work' as never, dueDate: null }),
+    ).toBeNull()
+    expect(
+      buildTask('Study', { area: null, dueDate: 'tomorrow' }),
+    ).toBeNull()
+  })
+
+  it('still rejects invalid titles with organization present', () => {
+    expect(
+      buildTask('   ', { area: 'college', dueDate: '2026-10-01' }),
+    ).toBeNull()
+  })
+})
+
+describe('updateTask', () => {
+  it('updates title, area, and due date together', () => {
+    const task = makeTask('a')
+    const next = updateTask([task], 'a', {
+      title: '  Renamed  ',
+      area: 'projects',
+      dueDate: '2026-10-02',
+    })
+    expect(next?.[0]).toEqual({
+      ...task,
+      title: 'Renamed',
+      area: 'projects',
+      dueDate: '2026-10-02',
+    })
+  })
+
+  it('clears area and due date', () => {
+    const task = makeTask('a', { area: 'college', dueDate: '2026-10-01' })
+    const next = updateTask([task], 'a', {
+      title: task.title,
+      area: null,
+      dueDate: null,
+    })
+    expect(next?.[0]).toEqual({ ...task, area: null, dueDate: null })
+  })
+
+  it('preserves done, createdAt, id, and notes', () => {
+    const task = makeTask('a', {
+      done: true,
+      createdAt: 42,
+      notes: 'keep',
+    })
+    const next = updateTask([task], 'a', {
+      title: 'new',
+      area: 'ideas',
+      dueDate: '2026-11-01',
+    })
+    expect(next?.[0]).toEqual({
+      ...task,
+      title: 'new',
+      area: 'ideas',
+      dueDate: '2026-11-01',
+    })
+  })
+
+  it('returns null for invalid title, area, date, or unknown id', () => {
+    const tasks = [makeTask('a')]
+    expect(
+      updateTask(tasks, 'a', { title: '  ', area: null, dueDate: null }),
+    ).toBeNull()
+    expect(
+      updateTask(tasks, 'a', {
+        title: 'ok',
+        area: 'work' as never,
+        dueDate: null,
+      }),
+    ).toBeNull()
+    expect(
+      updateTask(tasks, 'a', {
+        title: 'ok',
+        area: null,
+        dueDate: 'yesterday-ish',
+      }),
+    ).toBeNull()
+    expect(
+      updateTask(tasks, 'missing', {
+        title: 'ok',
+        area: null,
+        dueDate: null,
+      }),
+    ).toBeNull()
+  })
+
+  it('does not mutate the input', () => {
+    const tasks = [makeTask('a')]
+    const snapshot = structuredClone(tasks)
+    updateTask(tasks, 'a', {
+      title: 'new',
+      area: 'personal',
+      dueDate: '2026-10-03',
+    })
+    expect(tasks).toEqual(snapshot)
   })
 })

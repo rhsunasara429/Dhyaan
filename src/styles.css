@@ -147,6 +147,25 @@ body {
   overflow-wrap: break-word;
   cursor: pointer;
   padding: 0 var(--space-1) 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.task-title-text {
+  overflow-wrap: break-word;
+}
+
+.task-overdue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.task-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .task-row-done .task-title {
@@ -159,6 +178,88 @@ body {
   font-size: 1rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+.section-toggle {
+  width: 100%;
+  min-height: var(--tap-min);
+  margin-top: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sheet-more {
+  min-height: var(--tap-min);
+  margin-top: var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sheet-more-open {
+  margin-top: var(--space-1);
+}
+
+.sheet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.sheet-chip {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.sheet-chip-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sheet-due-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.sheet-date {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  font-size: 1rem;
+  font-family: inherit;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.sheet-due-shortcut {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .fab {

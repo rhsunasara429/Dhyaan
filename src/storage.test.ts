@@ -95,4 +95,17 @@ describe('storage', () => {
     saveTasks([makeTask('a')], store)
     expect(loadTasks(store)).toEqual([makeTask('a')])
   })
+
+  it('persists area and due date across a reload', () => {
+    const { store } = fakeStore()
+    const task = { ...makeTask('a'), area: 'college' as const, dueDate: '2026-10-01' }
+    saveTasks([task], store)
+    expect(loadTasks(store)).toEqual([task])
+  })
+
+  it('persists cleared area and due date across a reload', () => {
+    const { store } = fakeStore()
+    saveTasks([makeTask('a')], store)
+    expect(loadTasks(store)).toEqual([makeTask('a')])
+  })
 })

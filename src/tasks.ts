@@ -41,17 +41,31 @@ export function isTask(value: unknown): value is Task {
   )
 }
 
-export function buildTask(title: unknown): Task | null {
+export type TaskInit = {
+  area?: Area | null
+  dueDate?: string | null
+}
+
+export type TaskOrganization = {
+  area: Area | null
+  dueDate: string | null
+}
+
+export function buildTask(title: unknown, init?: TaskInit): Task | null {
   if (typeof title !== 'string') return null
   const trimmed = title.trim()
   if (trimmed.length === 0 || trimmed.length > MAX_TITLE_LENGTH) return null
+  const area = init?.area ?? null
+  const dueDate = init?.dueDate ?? null
+  if (area !== null && !isArea(area)) return null
+  if (dueDate !== null && !isDueDate(dueDate)) return null
   return {
     id: crypto.randomUUID(),
     title: trimmed,
     done: false,
     createdAt: Date.now(),
-    dueDate: null,
-    area: null,
+    dueDate,
+    area,
     notes: null,
   }
 }
@@ -87,4 +101,22 @@ export function renameTask(
 
 export function deleteTask(tasks: Task[], id: string): Task[] {
   return tasks.filter((task) => task.id !== id)
+}
+
+export function updateTask(
+  tasks: Task[],
+  id: string,
+  patch: { title: unknown } & TaskOrganization,
+): Task[] | null {
+  const trimmed = validateTitle(patch.title)
+  if (trimmed === null) return null
+  if (patch.area !== null && !isArea(patch.area)) return null
+  if (patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
+  let found = false
+  const next = tasks.map((task) => {
+    if (task.id !== id) return task
+    found = true
+    return { ...task, title: trimmed, area: patch.area, dueDate: patch.dueDate }
+  })
+  return found ? next : null
 }

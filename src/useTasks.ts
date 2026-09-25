@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { loadTasks, saveTasks } from './storage.ts'
-import { buildTask, deleteTask, renameTask, toggleTask } from './tasks.ts'
+import { buildTask, deleteTask, renameTask, toggleTask, updateTask } from './tasks.ts'
 import type { Task } from './types.ts'
 
 export function useTasks() {
@@ -13,8 +13,11 @@ export function useTasks() {
     saveTasks(next)
   }
 
-  function addTask(title: string): boolean {
-    const task = buildTask(title)
+  function addTask(
+    title: string,
+    init?: { area?: Task['area']; dueDate?: Task['dueDate'] },
+  ): boolean {
+    const task = buildTask(title, init)
     if (task === null) return false
     commit([task, ...tasksRef.current])
     return true
@@ -31,6 +34,16 @@ export function useTasks() {
     return true
   }
 
+  function updateTaskById(
+    id: string,
+    patch: { title: string; area: Task['area']; dueDate: Task['dueDate'] },
+  ): boolean {
+    const next = updateTask(tasksRef.current, id, patch)
+    if (next === null) return false
+    commit(next)
+    return true
+  }
+
   function deleteTaskById(id: string): boolean {
     const current = tasksRef.current
     if (!current.some((task) => task.id === id)) return false
@@ -38,5 +51,12 @@ export function useTasks() {
     return true
   }
 
-  return { tasks, addTask, toggleTaskById, renameTaskById, deleteTaskById }
+  return {
+    tasks,
+    addTask,
+    toggleTaskById,
+    renameTaskById,
+    updateTaskById,
+    deleteTaskById,
+  }
 }

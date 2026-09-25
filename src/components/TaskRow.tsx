@@ -2,11 +2,21 @@ import type { Task } from '../types.ts'
 
 type TaskRowProps = {
   task: Task
+  today: string
   onToggle: (id: string) => void
   onEdit: (id: string) => void
 }
 
-export function TaskRow({ task, onToggle, onEdit }: TaskRowProps) {
+function areaLabel(area: NonNullable<Task['area']>): string {
+  return area.charAt(0).toUpperCase() + area.slice(1)
+}
+
+export function TaskRow({ task, today, onToggle, onEdit }: TaskRowProps) {
+  const overdue = !task.done && task.dueDate !== null && task.dueDate < today
+  const meta: string[] = []
+  if (task.area !== null) meta.push(areaLabel(task.area))
+  if (task.dueDate !== null) meta.push(task.dueDate)
+
   return (
     <li className={task.done ? 'task-row task-row-done' : 'task-row'}>
       <button
@@ -25,7 +35,11 @@ export function TaskRow({ task, onToggle, onEdit }: TaskRowProps) {
         aria-label={`Edit "${task.title}"`}
         onClick={() => onEdit(task.id)}
       >
-        {task.title}
+        <span className="task-title-text">{task.title}</span>
+        {overdue ? <span className="task-overdue">Overdue</span> : null}
+        {meta.length > 0 ? (
+          <span className="task-meta">{meta.join(' · ')}</span>
+        ) : null}
       </button>
     </li>
   )
