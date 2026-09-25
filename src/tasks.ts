@@ -55,3 +55,36 @@ export function buildTask(title: unknown): Task | null {
     notes: null,
   }
 }
+
+function validateTitle(title: unknown): string | null {
+  if (typeof title !== 'string') return null
+  const trimmed = title.trim()
+  if (trimmed.length === 0 || trimmed.length > MAX_TITLE_LENGTH) return null
+  return trimmed
+}
+
+export function toggleTask(tasks: Task[], id: string): Task[] {
+  return tasks.map((task) =>
+    task.id === id ? { ...task, done: !task.done } : task,
+  )
+}
+
+export function renameTask(
+  tasks: Task[],
+  id: string,
+  title: unknown,
+): Task[] | null {
+  const trimmed = validateTitle(title)
+  if (trimmed === null) return null
+  let found = false
+  const next = tasks.map((task) => {
+    if (task.id !== id) return task
+    found = true
+    return { ...task, title: trimmed }
+  })
+  return found ? next : null
+}
+
+export function deleteTask(tasks: Task[], id: string): Task[] {
+  return tasks.filter((task) => task.id !== id)
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { selectInbox } from './selectors.ts'
+import { selectCompleted, selectInbox } from './selectors.ts'
 import type { Task } from './types.ts'
 
 function makeTask(overrides: Partial<Task> = {}): Task {
@@ -40,5 +40,30 @@ describe('selectInbox', () => {
       'mid',
       'old',
     ])
+  })
+})
+
+describe('selectCompleted', () => {
+  it('returns completed tasks', () => {
+    const done = makeTask({ id: 'done', done: true })
+    expect(selectCompleted([done])).toEqual([done])
+  })
+
+  it('excludes active tasks', () => {
+    expect(selectCompleted([makeTask({ id: 'a' })])).toEqual([])
+  })
+
+  it('orders newest first', () => {
+    const oldTask = makeTask({ id: 'old', done: true, createdAt: 100 })
+    const newTask = makeTask({ id: 'new', done: true, createdAt: 300 })
+    expect(selectCompleted([oldTask, newTask]).map((t) => t.id)).toEqual([
+      'new',
+      'old',
+    ])
+  })
+
+  it('keeps completed tasks out of the Inbox', () => {
+    const done = makeTask({ id: 'done', done: true })
+    expect(selectInbox([done])).toEqual([])
   })
 })

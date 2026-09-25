@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { CaptureSheet } from './components/CaptureSheet.tsx'
+import { EditSheet } from './components/EditSheet.tsx'
 import { EmptyState } from './components/EmptyState.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
-import { selectInbox } from './selectors.ts'
+import { selectCompleted, selectInbox } from './selectors.ts'
 import { useTasks } from './useTasks.ts'
 
 type Tab = 'inbox' | 'today'
@@ -10,8 +11,12 @@ type Tab = 'inbox' | 'today'
 function App() {
   const [tab, setTab] = useState<Tab>('inbox')
   const [captureOpen, setCaptureOpen] = useState(false)
-  const { tasks, addTask } = useTasks()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const { tasks, addTask, toggleTaskById, renameTaskById, deleteTaskById } =
+    useTasks()
   const inboxTasks = selectInbox(tasks)
+  const completedTasks = selectCompleted(tasks)
+  const editingTask = tasks.find((task) => task.id === editingId) ?? null
 
   return (
     <div className="app">
@@ -28,10 +33,30 @@ function App() {
             ) : (
               <ul className="task-list">
                 {inboxTasks.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onToggle={toggleTaskById}
+                    onEdit={setEditingId}
+                  />
                 ))}
               </ul>
             )}
+            {completedTasks.length > 0 ? (
+              <section aria-label="Completed">
+                <h3 className="section-heading">Completed</h3>
+                <ul className="task-list">
+                  {completedTasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      onToggle={toggleTaskById}
+                      onEdit={setEditingId}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </section>
         ) : (
           <section aria-label="Today">
@@ -54,6 +79,15 @@ function App() {
 
       {captureOpen ? (
         <CaptureSheet onSave={addTask} onClose={() => setCaptureOpen(false)} />
+      ) : null}
+
+      {editingTask ? (
+        <EditSheet
+          task={editingTask}
+          onSave={renameTaskById}
+          onDelete={deleteTaskById}
+          onClose={() => setEditingId(null)}
+        />
       ) : null}
 
       <nav className="tabbar" aria-label="Primary">

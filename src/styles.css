@@ -110,10 +110,55 @@ body {
 }
 
 .task-row {
-  padding: var(--space-1) var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow-wrap: break-word;
+}
+
+.task-checkbox {
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.task-checkbox[aria-checked='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.task-title {
+  flex: 1;
+  min-height: var(--tap-min);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: break-word;
+  cursor: pointer;
+  padding: 0 var(--space-1) 0 0;
+}
+
+.task-row-done .task-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.section-heading {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .fab {
@@ -192,4 +237,32 @@ body {
   border: 0;
   color: #ffffff;
   font-weight: 600;
+}
+
+.sheet-delete-zone {
+  width: 100%;
+  min-height: var(--tap-min);
+  margin-top: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: #b91c1c;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sheet-confirm-text {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.sheet-delete {
+  flex: 1;
+  min-height: var(--tap-min);
+  font-size: 1rem;
+  border-radius: var(--radius);
+  background: #b91c1c;
+  border: 0;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
 }

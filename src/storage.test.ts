@@ -76,4 +76,23 @@ describe('storage', () => {
     loadTasks(store)
     expect(raw()).toBeUndefined()
   })
+
+  it('persists completion across a reload', () => {
+    const { store } = fakeStore()
+    saveTasks([{ ...makeTask('a'), done: true }], store)
+    expect(loadTasks(store)).toEqual([{ ...makeTask('a'), done: true }])
+  })
+
+  it('persists an edited title across a reload', () => {
+    const { store } = fakeStore()
+    saveTasks([{ ...makeTask('a'), title: 'renamed' }], store)
+    expect(loadTasks(store)[0]?.title).toBe('renamed')
+  })
+
+  it('keeps a deleted task deleted across a reload', () => {
+    const { store } = fakeStore()
+    saveTasks([makeTask('a'), makeTask('b')], store)
+    saveTasks([makeTask('a')], store)
+    expect(loadTasks(store)).toEqual([makeTask('a')])
+  })
 })
