@@ -49,7 +49,7 @@ function App() {
         {tab === 'inbox' ? (
           <section aria-label="Inbox">
             <h2>Inbox</h2>
-            {inboxTasks.length === 0 ? (
+            {inboxTasks.length === 0 && completedTasks.length === 0 ? (
               <EmptyState />
             ) : (
               <ul className="task-list">
@@ -85,7 +85,12 @@ function App() {
           <section aria-label="Today">
             <h2>Today</h2>
             {todayEmpty ? (
-              <p className="placeholder">Nothing here yet.</p>
+              <div>
+                <p className="empty-title">Nothing here yet.</p>
+                <p className="empty-hint">
+                  Tasks due today or overdue will appear here.
+                </p>
+              </div>
             ) : null}
             {overdueTasks.length > 0 ? (
               <section aria-label="Overdue">
@@ -145,7 +150,7 @@ function App() {
         )}
       </main>
 
-      {tab === 'inbox' ? (
+      {tab === 'inbox' && !captureOpen && !editingTask ? (
         <button
           type="button"
           className="fab"

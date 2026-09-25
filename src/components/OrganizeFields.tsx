@@ -30,7 +30,7 @@ export function OrganizeFields({
         aria-expanded={false}
         onClick={() => setOpen(true)}
       >
-        More
+        Add details
       </button>
     )
   }
@@ -45,7 +45,7 @@ export function OrganizeFields({
         aria-expanded={true}
         onClick={() => setOpen(false)}
       >
-        Less
+        Hide details
       </button>
       <div
         className="sheet-chips"

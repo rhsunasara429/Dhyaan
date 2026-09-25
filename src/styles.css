@@ -4,7 +4,9 @@
   --muted: #6b7280;
   --border: #e5e7eb;
   --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
   --tabbar-bg: #ffffff;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --space-1: 8px;
@@ -58,8 +60,9 @@ body {
 
 .app-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .app-main {
@@ -68,11 +71,24 @@ body {
 }
 
 .app-main h2 {
-  margin: 0 0 var(--space-1);
-  font-size: 1.5rem;
+  margin: 0 0 var(--space-2);
+  font-size: 1.375rem;
+  font-weight: 600;
 }
 
 .placeholder {
+  margin: 0;
+  color: var(--muted);
+}
+
+.empty-title {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty-hint {
   margin: 0;
   color: var(--muted);
 }
@@ -143,6 +159,11 @@ input:focus-visible {
   border-color: var(--accent);
 }
 
+.task-row-done .task-checkbox[aria-checked='true'] {
+  background: var(--muted);
+  border-color: var(--muted);
+}
+
 .task-title {
   flex: 1;
   min-height: var(--tap-min);
@@ -182,8 +203,10 @@ input:focus-visible {
 
 .section-heading {
   margin: var(--space-3) 0 var(--space-1);
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -236,6 +259,7 @@ input:focus-visible {
 
 .sheet-chip-active {
   border-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
 }
@@ -275,20 +299,22 @@ input:focus-visible {
     var(--tap-min) + var(--space-2) + env(safe-area-inset-bottom)
   );
   right: max(var(--space-2), calc((100vw - var(--max-width)) / 2 + var(--space-2)));
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border: 0;
   border-radius: 50%;
   background: var(--accent);
   color: #ffffff;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
 .sheet-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 10;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
@@ -304,6 +330,7 @@ input:focus-visible {
   background: var(--bg);
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
   padding: var(--space-2);
   padding-bottom: calc(var(--space-2) + var(--tap-min));
 }
