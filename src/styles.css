@@ -99,3 +99,97 @@ body {
   color: var(--accent);
   font-weight: 600;
 }
+
+.task-list {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.task-row {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: break-word;
+}
+
+.fab {
+  position: fixed;
+  bottom: calc(var(--tap-min) + var(--space-2));
+  right: max(var(--space-2), calc((100vw - var(--max-width)) / 2 + var(--space-2)));
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet {
+  width: 100%;
+  max-width: var(--max-width);
+  background: var(--bg);
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  padding: var(--space-2);
+  padding-bottom: calc(var(--space-2) + var(--tap-min));
+}
+
+.sheet-input {
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: 1rem;
+  font-family: inherit;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.sheet-hint {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.sheet-cancel,
+.sheet-save {
+  flex: 1;
+  min-height: var(--tap-min);
+  font-size: 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.sheet-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.sheet-save {
+  background: var(--accent);
+  border: 0;
+  color: #ffffff;
+  font-weight: 600;
+}
