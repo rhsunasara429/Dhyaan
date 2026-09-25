@@ -27,7 +27,7 @@ export function TaskRow({ task, today, onToggle, onEdit }: TaskRowProps) {
         aria-label={task.done ? `Mark "${task.title}" as active` : `Mark "${task.title}" as complete`}
         onClick={() => onToggle(task.id)}
       >
-        {task.done ? '✓' : ''}
+        <span aria-hidden="true">{task.done ? '✓' : ''}</span>
       </button>
       <button
         type="button"

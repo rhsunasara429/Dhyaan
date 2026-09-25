@@ -15,6 +15,7 @@
 * Keep it simple. No router (tab state: `'inbox' | 'today'`), no Context/useReducer without demonstrated need.
 * No state-management, UI, date, animation, or E2E libraries.
 * Persistence is `localStorage` only (from M1). No IndexedDB, backend, auth, sync, or API without explicit product-owner approval.
+* PWA shell is hand-written (`public/sw.js` + `public/manifest.webmanifest`); SW registers in production builds only, standard lifecycle (no skipWaiting).
 
 ## Milestones
 
