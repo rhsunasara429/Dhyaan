@@ -1,0 +1,101 @@
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --tabbar-bg: #ffffff;
+
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --radius: 8px;
+  --max-width: 480px;
+  --tap-min: 44px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--max-width);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  border-inline: 1px solid var(--border);
+}
+
+.app-header {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  padding: var(--space-2);
+}
+
+.app-main h2 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.5rem;
+}
+
+.placeholder {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tabbar {
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--tabbar-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.tab {
+  flex: 1;
+  min-height: var(--tap-min);
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--accent);
+  font-weight: 600;
+}
