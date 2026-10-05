@@ -2,8 +2,12 @@ import { useState } from 'react'
 import { CaptureSheet } from './components/CaptureSheet.tsx'
 import { EditSheet } from './components/EditSheet.tsx'
 import { EmptyState } from './components/EmptyState.tsx'
+import { NoteEditSheet } from './components/NoteEditSheet.tsx'
+import { NoteRow } from './components/NoteRow.tsx'
+import { NoteSheet } from './components/NoteSheet.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
 import { todayLocal } from './dates.ts'
+import { selectNotesNewestFirst } from './notes.ts'
 import {
   selectCompleted,
   selectDueToday,
@@ -11,14 +15,17 @@ import {
   selectOverdue,
   selectUpcoming,
 } from './selectors.ts'
+import { useNotes } from './useNotes.ts'
 import { useTasks } from './useTasks.ts'
 
-type Tab = 'inbox' | 'today'
+type Tab = 'inbox' | 'today' | 'notes'
 
 function App() {
   const [tab, setTab] = useState<Tab>('inbox')
   const [captureOpen, setCaptureOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [noteCaptureOpen, setNoteCaptureOpen] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [upcomingOpen, setUpcomingOpen] = useState(false)
   const {
     tasks,
@@ -27,6 +34,7 @@ function App() {
     updateTaskById,
     deleteTaskById,
   } = useTasks()
+  const { notes, addNote, updateNoteById, deleteNoteById } = useNotes()
   const today = todayLocal()
   const inboxTasks = selectInbox(tasks)
   const completedTasks = selectCompleted(tasks)
@@ -34,6 +42,10 @@ function App() {
   const dueTodayTasks = selectDueToday(tasks, today)
   const upcomingTasks = selectUpcoming(tasks, today)
   const editingTask = tasks.find((task) => task.id === editingId) ?? null
+  const sortedNotes = selectNotesNewestFirst(notes)
+  const editingNote = notes.find((note) => note.id === editingNoteId) ?? null
+  const anySheetOpen =
+    captureOpen || editingTask !== null || noteCaptureOpen || editingNote !== null
   const todayEmpty =
     overdueTasks.length === 0 &&
     dueTodayTasks.length === 0 &&
@@ -81,7 +93,7 @@ function App() {
               </section>
             ) : null}
           </section>
-        ) : (
+        ) : tab === 'today' ? (
           <section aria-label="Today">
             <h2>Today</h2>
             {todayEmpty ? (
@@ -147,15 +159,33 @@ function App() {
               </section>
             ) : null}
           </section>
+        ) : (
+          <section aria-label="Notes">
+            <h2>Notes</h2>
+            {sortedNotes.length === 0 ? (
+              <div>
+                <p className="empty-title">No notes yet.</p>
+                <p className="empty-hint">Tap + to jot something down.</p>
+              </div>
+            ) : (
+              <ul className="note-list">
+                {sortedNotes.map((note) => (
+                  <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} />
+                ))}
+              </ul>
+            )}
+          </section>
         )}
       </main>
 
-      {tab === 'inbox' && !captureOpen && !editingTask ? (
+      {(tab === 'inbox' || tab === 'notes') && !anySheetOpen ? (
         <button
           type="button"
           className="fab"
-          aria-label="Capture task"
-          onClick={() => setCaptureOpen(true)}
+          aria-label={tab === 'notes' ? 'Capture note' : 'Capture task'}
+          onClick={() =>
+            tab === 'notes' ? setNoteCaptureOpen(true) : setCaptureOpen(true)
+          }
         >
           +
         </button>
@@ -171,6 +201,19 @@ function App() {
           onSave={updateTaskById}
           onDelete={deleteTaskById}
           onClose={() => setEditingId(null)}
+        />
+      ) : null}
+
+      {noteCaptureOpen ? (
+        <NoteSheet onSave={addNote} onClose={() => setNoteCaptureOpen(false)} />
+      ) : null}
+
+      {editingNote ? (
+        <NoteEditSheet
+          note={editingNote}
+          onSave={updateNoteById}
+          onDelete={deleteNoteById}
+          onClose={() => setEditingNoteId(null)}
         />
       ) : null}
 
@@ -190,6 +233,14 @@ function App() {
           onClick={() => setTab('today')}
         >
           Today
+        </button>
+        <button
+          type="button"
+          className={tab === 'notes' ? 'tab active' : 'tab'}
+          aria-current={tab === 'notes' ? 'page' : undefined}
+          onClick={() => setTab('notes')}
+        >
+          Notes
         </button>
       </nav>
     </div>

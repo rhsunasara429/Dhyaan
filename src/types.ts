@@ -14,3 +14,10 @@ export type Task = {
   area: Area | null
   notes: string | null
 }
+
+export type Note = {
+  id: string
+  content: string
+  createdAt: number
+  updatedAt: number
+}
