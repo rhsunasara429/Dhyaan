@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { Task } from '../types.ts'
 
 type TaskRowProps = {
@@ -13,13 +14,23 @@ function areaLabel(area: NonNullable<Task['area']>): string {
 }
 
 export function TaskRow({ task, today, onToggle, onEdit }: TaskRowProps) {
+  const [isFlashing, setIsFlashing] = useState(false)
+
+  useEffect(() => {
+    if (task.done) {
+      setIsFlashing(true)
+      const timer = setTimeout(() => setIsFlashing(false), 600)
+      return () => clearTimeout(timer)
+    }
+  }, [task.done])
+
   const overdue = !task.done && task.dueDate !== null && task.dueDate < today
   const meta: string[] = []
   if (task.area !== null) meta.push(areaLabel(task.area))
   if (task.dueDate !== null) meta.push(task.dueDate)
 
   return (
-    <li className={task.done ? 'task-row task-row-done' : 'task-row'}>
+    <li className={`${task.done ? 'task-row task-row-done' : 'task-row'} ${isFlashing ? 'task-row-flash' : ''}`}>
       <button
         type="button"
         className="task-checkbox"
