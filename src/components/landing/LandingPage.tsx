@@ -32,7 +32,9 @@ export const LandingPage = ({ onTryDhyaan }: { onTryDhyaan: () => void }) => {
 
       <header className="hero">
         <div className="hero-content">
-          <h1 className="hero-title">Get your thoughts out of your head.</h1>
+          <h1 className="hero-title">
+            Get your thoughts <span className="text-gradient">out of your head.</span>
+          </h1>
           <p className="hero-subtitle">
             Dhyaan is a calm, focused space to capture tasks and notes the moment they appear,
             so you can stop remembering and start doing.
@@ -42,6 +44,7 @@ export const LandingPage = ({ onTryDhyaan }: { onTryDhyaan: () => void }) => {
           </div>
         </div>
         <div className="hero-visual">
+          <div className="hero-glow"></div>
           <AppPreview />
         </div>
       </header>
@@ -54,23 +57,31 @@ export const LandingPage = ({ onTryDhyaan }: { onTryDhyaan: () => void }) => {
         <div className="workflow-grid">
           <div className="workflow-item">
             <div className="workflow-number">01</div>
-            <h3>Capture</h3>
-            <p>Jot down tasks and notes instantly. No friction, no complex folders.</p>
+            <div className="workflow-text">
+              <h3>Capture</h3>
+              <p>Jot down tasks and notes instantly. No friction, no complex folders.</p>
+            </div>
           </div>
           <div className="workflow-item">
             <div className="workflow-number">02</div>
-            <h3>Organize</h3>
-            <p>Differentiate between your general inbox and what needs attention today.</p>
+            <div className="workflow-text">
+              <h3>Organize</h3>
+              <p>Differentiate between your general inbox and what needs attention today.</p>
+            </div>
           </div>
           <div className="workflow-item">
             <div className="workflow-number">03</div>
-            <h3>Decide</h3>
-            <p>Look at your "Today" list and decide what actually matters right now.</p>
+            <div className="workflow-text">
+              <h3>Decide</h3>
+              <p>Look at your "Today" list and decide what actually matters right now.</p>
+            </div>
           </div>
           <div className="workflow-item">
             <div className="workflow-number">04</div>
-            <h3>Complete</h3>
-            <p>Feel the satisfaction of checking off your goals with mindful feedback.</p>
+            <div className="workflow-text">
+              <h3>Complete</h3>
+              <p>Feel the satisfaction of checking off your goals with mindful feedback.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -78,17 +89,23 @@ export const LandingPage = ({ onTryDhyaan }: { onTryDhyaan: () => void }) => {
       <section id="benefits" className="benefits">
         <div className="benefits-grid">
           <div className="benefit-card">
-            <div className="benefit-icon">☁️</div>
+            <div className="benefit-icon-blob">
+              <div className="benefit-icon">☁️</div>
+            </div>
             <h3>Reduced Mental Load</h3>
             <p>Stop using your brain as a to-do list. Offload everything to Dhyaan and breathe.</p>
           </div>
           <div className="benefit-card">
-            <div className="benefit-icon">🎯</div>
+            <div className="benefit-icon-blob">
+              <div className="benefit-icon">🎯</div>
+            </div>
             <h3>Laser Focus</h3>
             <p>By separating "Inbox" from "Today", you eliminate the noise of future tasks.</p>
           </div>
           <div className="benefit-card">
-            <div className="benefit-icon">📝</div>
+            <div className="benefit-icon-blob">
+              <div className="benefit-icon">📝</div>
+            </div>
             <h3>Quick Notes</h3>
             <p>More than just tasks. Keep your fleeting ideas and useful snippets accessible.</p>
           </div>

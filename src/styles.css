@@ -1,3 +1,40 @@
+:root {
+  /* Zinc Palette */
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  /* Theme-aware Semantic Variables */
+  --bg-main: var(--zinc-50);
+  --bg-surface: #ffffff;
+  --bg-muted: var(--zinc-100);
+  --text-main: var(--zinc-900);
+  --text-muted: var(--zinc-600);
+  --border-subtle: var(--zinc-200);
+
+  /* Standard accent color as RGB for transparency */
+  --color-accent-rgb: 99, 102, 241;
+  --glow-color: rgba(var(--color-accent-rgb), 0.15);
+}
+
+[data-theme='dark'] {
+  --bg-main: var(--zinc-950);
+  --bg-surface: var(--zinc-900);
+  --bg-muted: var(--zinc-800);
+  --text-main: var(--zinc-50);
+  --text-muted: var(--zinc-400);
+  --border-subtle: var(--zinc-800);
+  --glow-color: rgba(var(--color-accent-rgb), 0.1);
+}
+
 .phone-frame {
   position: relative;
   width: 280px;
