@@ -109,10 +109,6 @@ function App() {
     trigger(celebration)
   }
 
-  if (currentPath !== '/app') {
-    return <LandingPage onTryDhyaan={navigateToApp} />
-  }
-
   return (
     <div className="app">
       <header className="app-header">
