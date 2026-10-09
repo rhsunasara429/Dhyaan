@@ -904,6 +904,100 @@ textarea:focus-visible {
   }
 }
 
+/* ============================================================
+   M7 — End-of-day reminder
+   ============================================================ */
+
+/* Sits directly above the tabbar (sticky, tap-min tall plus safe area) and
+   below the FAB layer, so it never covers navigation. */
+.reminder {
+  position: fixed;
+  left: max(var(--space-3), calc((100vw - var(--max-width)) / 2 + var(--space-3)));
+  right: max(var(--space-3), calc((100vw - var(--max-width)) / 2 + var(--space-3)));
+  bottom: calc(var(--tap-min) + env(safe-area-inset-bottom) + var(--space-2));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: reminder-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes reminder-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reminder-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.reminder-body {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.reminder-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.reminder-review {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.reminder-review:active {
+  transform: scale(0.96);
+}
+
+.reminder-dismiss {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.reminder-dismiss:active {
+  transform: scale(0.96);
+}
+
 /* ---- Reduced motion ----
    Celebration.tsx and feedback.ts already avoid spawning particles and the
    pulse ring when this matches; this block is the backstop for every
@@ -927,5 +1021,11 @@ textarea:focus-visible {
   .particle,
   .complete-ring {
     display: none;
+  }
+
+  /* The reminder is information, not decoration: it still has to appear, just
+     without sliding in. */
+  .reminder {
+    animation: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { resolveCelebration } from './celebration.ts'
 import { CaptureSheet } from './components/CaptureSheet.tsx'
 import { Celebration } from './components/Celebration.tsx'
@@ -7,6 +7,7 @@ import { EmptyState } from './components/EmptyState.tsx'
 import { NoteEditSheet } from './components/NoteEditSheet.tsx'
 import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
+import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
 import { todayLocal } from './dates.ts'
 import { selectNotesNewestFirst } from './notes.ts'
@@ -18,9 +19,10 @@ import {
   selectUpcoming,
 } from './selectors.ts'
 import { countCompletedOn } from './streaks.ts'
-import { popCheckbox, ringPulse, tapFeedback } from './feedback.ts'
+import { popCheckbox, ringPulse, tapFeedback, unlockAudio } from './feedback.ts'
 import { useCelebration } from './useCelebration.ts'
 import { useNotes } from './useNotes.ts'
+import { useReminder } from './useReminder.ts'
 import { useTasks } from './useTasks.ts'
 import { useTheme } from './useTheme.ts'
 
@@ -58,7 +60,24 @@ function App() {
     dueTodayTasks.length === 0 &&
     upcomingTasks.length === 0
 
+  // One shared definition of "open work": the same count that drives the
+  // "Today is clear" celebration, so the two can never disagree.
+  const openTodayCount = overdueTasks.length + dueTodayTasks.length
+
   const { burst, trigger } = useCelebration()
+  const reminder = useReminder(openTodayCount)
+
+  // Browsers keep an AudioContext suspended until a real gesture, so unlock it
+  // on the first interaction or the reminder chime would be silently dropped.
+  useEffect(() => {
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   /**
    * Anchored feedback (checkbox pop, ring pulse) uses the tapped element;
@@ -81,7 +100,7 @@ function App() {
     const celebration = resolveCelebration({
       completing,
       inToday: task.dueDate !== null,
-      todayRemaining: overdueTasks.length + dueTodayTasks.length,
+      todayRemaining: openTodayCount,
       completedToday: countCompletedOn(tasks, today),
     })
     toggleTaskById(id)
@@ -244,6 +263,14 @@ function App() {
       </main>
 
       {burst ? <Celebration burst={burst} /> : null}
+
+      {reminder.open && !anySheetOpen ? (
+        <ReminderBanner
+          openCount={reminder.openCount}
+          onReview={() => setTab('today')}
+          onDismiss={reminder.dismiss}
+        />
+      ) : null}
 
       {(tab === 'inbox' || tab === 'notes') && !anySheetOpen ? (
         <button

@@ -61,6 +61,58 @@ does not vanish entirely.
 M6c (progress ring + streak counter), M6d (row enter, sheet exit, tab direction)
 and M6e (deletion collapse, the most complex piece) are planned but unimplemented.
 
+---
+
+## End-of-day reminder (M7)
+
+From 8 PM local time, if any task due today or earlier is still open, the app
+shows a banner and plays a chime. **Once per day.**
+
+### The platform limit, stated plainly
+
+**This does not ring at 8 PM if the app is closed.** Nothing runs when a web app
+is closed, and the web has no alarm API. What it does instead is *catch up*: if
+they open the app at 9:40 PM and have not seen it today, it shows then. A
+guaranteed 8 PM alarm on a locked phone would need a backend to push from, which
+`AGENTS.md` rules out. Do not describe this feature to users as an alarm.
+
+Three triggers run, because no single one is reliable:
+
+| Trigger | Covers |
+| --- | --- |
+| on mount | app opened after the hour |
+| `visibilitychange` | returning to an already-open tab |
+| a re-armed timeout | app left open until 8 PM |
+
+A timeout alone drifts when the device sleeps; visibility alone misses a tab
+left open all evening.
+
+### Trigger rule
+
+All three must hold: local time ≥ 20:00, at least one open task due today or
+overdue, and not already shown today. The open count is
+`selectOverdue(...).length + selectDueToday(...).length` — deliberately the same
+count the "Today is clear" celebration uses, so the two cannot disagree. When
+that count reaches zero the banner retracts.
+
+Logic lives in `src/reminders.ts` as pure functions with `now` injected, so tests
+can pin 7:59 PM against 8:00 PM exactly.
+
+### Sound
+
+A two-tone chime **synthesised with the Web Audio API** — no audio asset, no
+dependency. Browsers keep an `AudioContext` suspended until a real gesture, so
+`App.tsx` unlocks it on the first `pointerdown`/`keydown`. On a cold load with no
+gesture yet the chime is silently skipped rather than throwing; the banner still
+appears, so the message is never lost.
+
+### Accessibility
+
+`role="status"` (polite) rather than `role="alert"`, because an unprompted
+assertive announcement interrupts a screen-reader user mid-task. The banner is
+visual, so sound is never the sole signal, and its entrance respects
+reduced motion.
+
 ## PWA icons
 
 Icons are **generated, not hand-edited**. `scripts/generate-icons.mjs` renders the
