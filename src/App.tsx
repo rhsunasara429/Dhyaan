@@ -9,6 +9,7 @@ import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
 import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
+import { LandingPage } from './components/landing/LandingPage.tsx'
 import { todayLocal } from './dates.ts'
 import { selectNotesNewestFirst } from './notes.ts'
 import {
@@ -30,6 +31,7 @@ type Tab = 'inbox' | 'today' | 'notes'
 
 function App() {
   const { theme, toggleTheme } = useTheme()
+  const [currentPath, setCurrentPath] = useState(window.location.pathname)
   const [tab, setTab] = useState<Tab>('inbox')
   const [captureOpen, setCaptureOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -59,16 +61,17 @@ function App() {
     overdueTasks.length === 0 &&
     dueTodayTasks.length === 0 &&
     upcomingTasks.length === 0
-
-  // One shared definition of "open work": the same count that drives the
-  // "Today is clear" celebration, so the two can never disagree.
   const openTodayCount = overdueTasks.length + dueTodayTasks.length
 
   const { burst, trigger } = useCelebration()
   const reminder = useReminder(openTodayCount)
 
-  // Browsers keep an AudioContext suspended until a real gesture, so unlock it
-  // on the first interaction or the reminder chime would be silently dropped.
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(window.location.pathname)
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   useEffect(() => {
     const unlock = () => unlockAudio()
     window.addEventListener('pointerdown', unlock, { once: true })
@@ -79,11 +82,11 @@ function App() {
     }
   }, [])
 
-  /**
-   * Anchored feedback (checkbox pop, ring pulse) uses the tapped element;
-   * the celebration itself is centred by CSS, so it survives the row being
-   * unmounted by this toggle.
-   */
+  function navigateToApp() {
+    window.history.pushState({}, '', '/app')
+    setCurrentPath('/app')
+  }
+
   function handleToggle(id: string, anchor: HTMLElement) {
     const task = tasks.find((candidate) => candidate.id === id)
     if (task === undefined) return
@@ -96,7 +99,6 @@ function App() {
     }
     tapFeedback()
 
-    // Counts are read before the toggle so the earned tier is deterministic.
     const celebration = resolveCelebration({
       completing,
       inToday: task.dueDate !== null,
@@ -105,6 +107,10 @@ function App() {
     })
     toggleTaskById(id)
     trigger(celebration)
+  }
+
+  if (currentPath !== '/app') {
+    return <LandingPage onTryDhyaan={navigateToApp} />
   }
 
   return (
@@ -126,32 +132,16 @@ function App() {
           )}
         </button>
       </header>
-
       <main className="app-main">
         <div className="tab-content" key={tab}>
-        {tab === 'inbox' ? (
-          <section aria-label="Inbox">
-            <h2>Inbox</h2>
-            {inboxTasks.length === 0 && completedTasks.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <ul className="task-list">
-                {inboxTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    today={today}
-                    onToggle={handleToggle}
-                    onEdit={setEditingId}
-                  />
-                ))}
-              </ul>
-            )}
-            {completedTasks.length > 0 ? (
-              <section aria-label="Completed">
-                <h3 className="section-heading">Completed</h3>
+          {tab === 'inbox' ? (
+            <section aria-label="Inbox">
+              <h2>Inbox</h2>
+              {inboxTasks.length === 0 && completedTasks.length === 0 ? (
+                <EmptyState />
+              ) : (
                 <ul className="task-list">
-                  {completedTasks.map((task) => (
+                  {inboxTasks.map((task) => (
                     <TaskRow
                       key={task.id}
                       task={task}
@@ -161,68 +151,12 @@ function App() {
                     />
                   ))}
                 </ul>
-              </section>
-            ) : null}
-          </section>
-        ) : tab === 'today' ? (
-          <section aria-label="Today">
-            <h2>Today</h2>
-            {todayEmpty ? (
-              <div className="empty-state">
-                <svg className="empty-state-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="6" y="8" width="36" height="32" rx="4" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="6" y1="18" x2="42" y2="18" strokeLinecap="round" />
-                  <line x1="14" y1="4" x2="14" y2="12" strokeLinecap="round" />
-                  <line x1="34" y1="4" x2="34" y2="12" strokeLinecap="round" />
-                </svg>
-                <p className="empty-title">Nothing here yet.</p>
-                <p className="empty-hint">
-                  Tasks due today or overdue will appear here.
-                </p>
-              </div>
-            ) : null}
-            {overdueTasks.length > 0 ? (
-              <section aria-label="Overdue">
-                <h3 className="section-heading">Overdue</h3>
-                <ul className="task-list">
-                  {overdueTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      today={today}
-                      onToggle={handleToggle}
-                      onEdit={setEditingId}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-            {dueTodayTasks.length > 0 ? (
-              <ul className="task-list">
-                {dueTodayTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    today={today}
-                    onToggle={handleToggle}
-                    onEdit={setEditingId}
-                  />
-                ))}
-              </ul>
-            ) : null}
-            {upcomingTasks.length > 0 ? (
-              <section aria-label="Upcoming">
-                <button
-                  type="button"
-                  className="section-toggle"
-                  aria-expanded={upcomingOpen}
-                  onClick={() => setUpcomingOpen((open) => !open)}
-                >
-                  Upcoming ({upcomingTasks.length})
-                </button>
-                {upcomingOpen ? (
+              )}
+              {completedTasks.length > 0 ? (
+                <section aria-label="Completed">
+                  <h3 className="section-heading">Completed</h3>
                   <ul className="task-list">
-                    {upcomingTasks.map((task) => (
+                    {completedTasks.map((task) => (
                       <TaskRow
                         key={task.id}
                         task={task}
@@ -232,38 +166,107 @@ function App() {
                       />
                     ))}
                   </ul>
-                ) : null}
-              </section>
-            ) : null}
-          </section>
-        ) : (
-          <section aria-label="Notes">
-            <h2>Notes</h2>
-            {sortedNotes.length === 0 ? (
-              <div className="empty-state">
-                <svg className="empty-state-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
-                   <path d="M8 8a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8z" strokeLinecap="round" strokeLinejoin="round"/>
-                   <line x1="16" y1="16" x2="32" y2="16" strokeLinecap="round" />
-                   <line x1="16" y1="24" x2="32" y2="24" strokeLinecap="round" />
-                   <line x1="16" y1="32" x2="24" y2="32" strokeLinecap="round" />
-                </svg>
-                <p className="empty-title">No notes yet.</p>
-                <p className="empty-hint">Tap + to jot something down.</p>
-              </div>
-            ) : (
-              <ul className="note-list">
-                {sortedNotes.map((note) => (
-                  <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} />
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
+                </section>
+              ) : null}
+            </section>
+          ) : tab === 'today' ? (
+            <section aria-label="Today">
+              <h2>Today</h2>
+              {todayEmpty ? (
+                <div className="empty-state">
+                  <svg className="empty-state-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="6" y="8" width="36" height="32" rx="4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="6" y1="18" x2="42" y2="18" strokeLinecap="round" />
+                    <line x1="14" y1="4" x2="14" y2="12" strokeLinecap="round" />
+                    <line x1="34" y1="4" x2="34" y2="12" strokeLinecap="round" />
+                  </svg>
+                  <p className="empty-title">Nothing here yet.</p>
+                  <p className="empty-hint">
+                    Tasks due today or overdue will appear here.
+                  </p>
+                </div>
+              ) : null}
+              {overdueTasks.length > 0 ? (
+                <section aria-label="Overdue">
+                  <h3 className="section-heading">Overdue</h3>
+                  <ul className="task-list">
+                    {overdueTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        today={today}
+                        onToggle={handleToggle}
+                        onEdit={setEditingId}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              {dueTodayTasks.length > 0 ? (
+                <ul className="task-list">
+                  {dueTodayTasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      today={today}
+                      onToggle={handleToggle}
+                      onEdit={setEditingId}
+                    />
+                  ))}
+                </ul>
+              ) : null}
+              {upcomingTasks.length > 0 ? (
+                <section aria-label="Upcoming">
+                  <button
+                    type="button"
+                    className="section-toggle"
+                    aria-expanded={upcomingOpen}
+                    onClick={() => setUpcomingOpen((open) => !open)}
+                  >
+                    Upcoming ({upcomingTasks.length})
+                  </button>
+                  {upcomingOpen ? (
+                    <ul className="task-list">
+                      {upcomingTasks.map((task) => (
+                        <TaskRow
+                          key={task.id}
+                          task={task}
+                          today={today}
+                          onToggle={handleToggle}
+                          onEdit={setEditingId}
+                        />
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              ) : null}
+            </section>
+          ) : (
+            <section aria-label="Notes">
+              <h2>Notes</h2>
+              {sortedNotes.length === 0 ? (
+                <div className="empty-state">
+                  <svg className="empty-state-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 8a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8z" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="16" y1="16" x2="32" y2="16" strokeLinecap="round" />
+                    <line x1="16" y1="24" x2="32" y2="24" strokeLinecap="round" />
+                    <line x1="16" y1="32" x2="24" y2="32" strokeLinecap="round" />
+                  </svg>
+                  <p className="empty-title">No notes yet.</p>
+                  <p className="empty-hint">Tap + to jot something down.</p>
+                </div>
+              ) : (
+                <ul className="note-list">
+                  {sortedNotes.map((note) => (
+                    <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </div>
       </main>
-
       {burst ? <Celebration burst={burst} /> : null}
-
       {reminder.open && !anySheetOpen ? (
         <ReminderBanner
           openCount={reminder.openCount}
@@ -271,7 +274,6 @@ function App() {
           onDismiss={reminder.dismiss}
         />
       ) : null}
-
       {(tab === 'inbox' || tab === 'notes') && !anySheetOpen ? (
         <button
           type="button"
@@ -287,11 +289,9 @@ function App() {
           </svg>
         </button>
       ) : null}
-
       {captureOpen ? (
         <CaptureSheet onSave={addTask} onClose={() => setCaptureOpen(false)} />
       ) : null}
-
       {editingTask ? (
         <EditSheet
           task={editingTask}
@@ -300,11 +300,9 @@ function App() {
           onClose={() => setEditingId(null)}
         />
       ) : null}
-
       {noteCaptureOpen ? (
         <NoteSheet onSave={addNote} onClose={() => setNoteCaptureOpen(false)} />
       ) : null}
-
       {editingNote ? (
         <NoteEditSheet
           note={editingNote}
@@ -313,7 +311,6 @@ function App() {
           onClose={() => setEditingNoteId(null)}
         />
       ) : null}
-
       <nav className="tabbar" aria-label="Primary" data-active-tab={tab === 'inbox' ? 0 : tab === 'today' ? 1 : 2}>
         <button
           type="button"
@@ -329,7 +326,7 @@ function App() {
           aria-current={tab === 'today' ? 'page' : undefined}
           onClick={() => setTab('today')}
         >
-          Today
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <button
           type="button"
