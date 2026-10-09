@@ -30,7 +30,7 @@ function buildParticles(count: number): Particle[] {
 }
 
 export function Celebration({ burst }: { burst: Burst }) {
-  const { id, x, y, tier, message, sub, reduced } = burst
+  const { id, tier, message, sub, reduced } = burst
 
   // 'clear' is the bigger moment, so it earns more particles. Computed once
   // per mount: the parent keys this subtree on `id`, so a new celebration
@@ -41,14 +41,14 @@ export function Celebration({ burst }: { burst: Burst }) {
 
   return (
     // Keyed on id so every celebration replays its entrance from scratch.
+    // Centred by CSS, not by coordinates — the reward should land where the
+    // eye already is, not out at the checkbox in the left gutter.
     <div className={`celebration celebration-${tier}`} key={id} aria-hidden="true">
       {particles.map((particle) => (
         <span
           key={particle.key}
           className={particle.round ? 'particle particle-round' : 'particle'}
           style={{
-            left: `${x}px`,
-            top: `${y}px`,
             width: `${particle.size}px`,
             height: `${particle.size}px`,
             animationDelay: `${particle.delay}ms`,
@@ -59,7 +59,7 @@ export function Celebration({ burst }: { burst: Burst }) {
           }}
         />
       ))}
-      <div className="celebration-message" style={{ left: `${x}px`, top: `${y}px` }}>
+      <div className="celebration-message">
         <span className="celebration-title">{message}</span>
         {sub ? <span className="celebration-sub">{sub}</span> : null}
       </div>

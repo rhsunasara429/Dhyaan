@@ -5,9 +5,6 @@ import { celebrateFeedback, prefersReducedMotion } from './feedback.ts'
 export type Burst = Celebration & {
   /** Changing id re-keys the overlay, which restarts the CSS animations. */
   id: number
-  /** Viewport coordinates of the checkbox that was tapped. */
-  x: number
-  y: number
   /** True when the user asked the OS to reduce motion: show the words, skip the movement. */
   reduced: boolean
 }
@@ -32,15 +29,13 @@ export function useCelebration() {
   useEffect(() => clear, [clear])
 
   const trigger = useCallback(
-    (celebration: Celebration | null, rect: DOMRect) => {
+    (celebration: Celebration | null) => {
       if (celebration === null) return
       celebrateFeedback()
       seq.current += 1
       setBurst({
         ...celebration,
         id: seq.current,
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
         reduced: prefersReducedMotion(),
       })
       if (timer.current !== null) window.clearTimeout(timer.current)

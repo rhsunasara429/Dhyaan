@@ -61,16 +61,15 @@ function App() {
   const { burst, trigger } = useCelebration()
 
   /**
-   * Measures the tapped checkbox before the state change, because completing a
-   * task unmounts its row — in Inbox it moves to another list, in Today it
-   * disappears entirely — so there is nothing left to animate afterwards.
+   * Anchored feedback (checkbox pop, ring pulse) uses the tapped element;
+   * the celebration itself is centred by CSS, so it survives the row being
+   * unmounted by this toggle.
    */
   function handleToggle(id: string, anchor: HTMLElement) {
     const task = tasks.find((candidate) => candidate.id === id)
     if (task === undefined) return
 
     const completing = !task.done
-    const rect = anchor.getBoundingClientRect()
 
     if (completing) {
       popCheckbox(anchor)
@@ -86,7 +85,7 @@ function App() {
       completedToday: countCompletedOn(tasks, today),
     })
     toggleTaskById(id)
-    trigger(celebration, rect)
+    trigger(celebration)
   }
 
   return (

@@ -17,9 +17,13 @@ Capture college tasks quickly and work through them today.
 
 Completing a task **destroys its row** — in Inbox the task moves to a different
 list, in Today it disappears entirely — so a completion animation cannot live on
-the row itself. `App.tsx` measures the tapped checkbox's `getBoundingClientRect()`
-*before* the state change, then renders a detached `position: fixed` overlay that
-outlives the row. `TaskRow` stays stateless.
+the row itself. The celebration renders as a detached `position: fixed` overlay
+that outlives the row. `TaskRow` stays stateless.
+
+The overlay is **centred in the viewport**, not anchored to the checkbox: the
+checkbox sits in the left gutter, and a reward that fires out at the screen edge
+is easy to miss. Only the small anchored feedback (checkbox pop, ring pulse)
+follows the tapped element.
 
 | Tier | Fires when | Feedback |
 | --- | --- | --- |
