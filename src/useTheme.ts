@@ -11,11 +11,18 @@ export function useTheme() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('dhyaan.theme', theme);
 
-    // Update theme-color meta tag
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0d1117' : '#ffffff');
-    }
+    // Update theme-color meta tags.
+    //
+    // index.html declares a light/dark pair gated on prefers-color-scheme so
+    // the status bar is right on first paint, before this effect runs. Once
+    // JS is in charge we drop the media gating and pin every meta to the
+    // chosen theme. Leaving the media attributes in place means the
+    // dark-scheme meta keeps winning regardless of what the user picked.
+    const content = theme === 'dark' ? '#0d1117' : '#ffffff';
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.removeAttribute('media');
+      meta.setAttribute('content', content);
+    });
   }, [theme]);
 
   // Listen for system preference changes (if user hasn't explicitly overridden)

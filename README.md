@@ -1,15 +1,39 @@
-# React + TypeScript + Vite
+# Dhyaan
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Capture college tasks quickly and work through them today.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Vite dev server |
+| `npm run build` | Typecheck + production build |
+| `npm run typecheck` | Typecheck only |
+| `npm run test` | Vitest |
+| `npm run lint` | Oxlint |
+| `npm run icons` | Regenerate every icon in `public/` |
 
-## React Compiler
+## PWA icons
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Icons are **generated, not hand-edited**. `scripts/generate-icons.mjs` renders the
+app mark (the concentric rings from `src/App.tsx`) into the PNG and SVG assets
+referenced by `public/manifest.webmanifest` and `index.html`. It has no
+dependencies — edit `MARK` or the palette at the top of that file and re-run
+`npm run icons`.
+
+The mark sits at 92% scale on standard icons and 86% on `maskable` ones, which
+keeps it inside Android's guaranteed 80%-diameter safe circle so adaptive icon
+masks cannot clip it.
+
+### Seeing icon changes on a device
+
+The OS copies the app icon onto the home screen **at install time**, so an
+already-installed PWA will keep the old icon. To pick up a new one:
+
+1. Uninstall the app from the home screen.
+2. Reinstall it from the browser.
+3. If it still looks stale, hard-reload or clear site data first — `public/sw.js`
+   serves assets stale-while-revalidate, so a cached icon can survive one visit.
 
 ## Expanding the Oxlint configuration
 
