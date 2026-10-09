@@ -21,11 +21,19 @@ function makeTask(id: string): Task {
     id,
     title: `task ${id}`,
     done: false,
+    doneAt: null,
     createdAt: 1,
     dueDate: null,
     area: null,
     notes: null,
   }
+}
+
+/** A task exactly as it was persisted before `doneAt` existed (pre-M6). */
+function legacyTask(id: string): Record<string, unknown> {
+  const task = makeTask(id) as Record<string, unknown>
+  delete task.doneAt
+  return task
 }
 
 describe('storage', () => {
@@ -107,5 +115,40 @@ describe('storage', () => {
     const { store } = fakeStore()
     saveTasks([makeTask('a')], store)
     expect(loadTasks(store)).toEqual([makeTask('a')])
+  })
+
+  /* --- M6 migration: the highest-stakes behaviour in this file. If isTask
+     ever starts requiring doneAt, these fail and real user data disappears. --- */
+
+  it('keeps tasks stored before doneAt existed', () => {
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([legacyTask('old-a'), legacyTask('old-b')]),
+    })
+    const loaded = loadTasks(store)
+    expect(loaded.map((task) => task.id)).toEqual(['old-a', 'old-b'])
+  })
+
+  it('normalises a missing doneAt to null on load', () => {
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([legacyTask('old-a')]),
+    })
+    expect(loadTasks(store)).toEqual([makeTask('old-a')])
+  })
+
+  it('preserves an existing doneAt through a reload', () => {
+    const { store } = fakeStore()
+    saveTasks([{ ...makeTask('a'), done: true, doneAt: 1_700_000_000_000 }], store)
+    expect(loadTasks(store)[0]?.doneAt).toBe(1_700_000_000_000)
+  })
+
+  it('still discards genuinely malformed tasks during migration', () => {
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([
+        legacyTask('good'),
+        { id: 'bad', title: '' },
+        { ...makeTask('bad-doneAt'), doneAt: 'nope' },
+      ]),
+    })
+    expect(loadTasks(store).map((task) => task.id)).toEqual(['good'])
   })
 })

@@ -32,7 +32,12 @@ export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
     return []
   }
   if (!Array.isArray(parsed)) return []
-  return parsed.filter(isTask)
+  // Backward-compatible migration: tasks stored before `doneAt` existed (M6)
+  // carry no such key. isTask tolerates the absence, so normalise here instead
+  // of bumping STORAGE_KEY, which would orphan every existing task.
+  return parsed
+    .filter(isTask)
+    .map((task) => ({ ...task, doneAt: task.doneAt ?? null }))
 }
 
 export function saveTasks(

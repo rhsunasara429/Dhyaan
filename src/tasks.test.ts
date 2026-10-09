@@ -14,6 +14,7 @@ function makeTask(id: string, overrides: Partial<Task> = {}): Task {
     id,
     title: `task ${id}`,
     done: false,
+    doneAt: null,
     createdAt: 100,
     dueDate: null,
     area: null,
@@ -89,9 +90,23 @@ describe('toggleTask', () => {
       notes: 'note',
     })
     const other = makeTask('b')
-    const next = toggleTask([target, other], 'a')
-    expect(next[0]).toEqual({ ...target, done: true })
+    const next = toggleTask([target, other], 'a', 1234)
+    expect(next[0]).toEqual({ ...target, done: true, doneAt: 1234 })
     expect(next[1]).toBe(other)
+  })
+
+  /* --- M6: doneAt powers the daily completion counts --- */
+
+  it('stamps doneAt when completing and clears it when un-completing', () => {
+    const done = toggleTask([makeTask('a')], 'a', 555)
+    expect(done[0]?.doneAt).toBe(555)
+    expect(toggleTask(done, 'a', 999)[0]?.doneAt).toBeNull()
+  })
+
+  it('does not mutate the original task when stamping doneAt', () => {
+    const target = makeTask('a')
+    toggleTask([target], 'a', 777)
+    expect(target.doneAt).toBeNull()
   })
 
   it('does not mutate the original array or task', () => {

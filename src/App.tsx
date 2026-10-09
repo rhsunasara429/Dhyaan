@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { resolveCelebration } from './celebration.ts'
 import { CaptureSheet } from './components/CaptureSheet.tsx'
+import { Celebration } from './components/Celebration.tsx'
 import { EditSheet } from './components/EditSheet.tsx'
 import { EmptyState } from './components/EmptyState.tsx'
 import { NoteEditSheet } from './components/NoteEditSheet.tsx'
@@ -15,6 +17,9 @@ import {
   selectOverdue,
   selectUpcoming,
 } from './selectors.ts'
+import { countCompletedOn } from './streaks.ts'
+import { popCheckbox, ringPulse, tapFeedback } from './feedback.ts'
+import { useCelebration } from './useCelebration.ts'
 import { useNotes } from './useNotes.ts'
 import { useTasks } from './useTasks.ts'
 import { useTheme } from './useTheme.ts'
@@ -53,6 +58,37 @@ function App() {
     dueTodayTasks.length === 0 &&
     upcomingTasks.length === 0
 
+  const { burst, trigger } = useCelebration()
+
+  /**
+   * Measures the tapped checkbox before the state change, because completing a
+   * task unmounts its row — in Inbox it moves to another list, in Today it
+   * disappears entirely — so there is nothing left to animate afterwards.
+   */
+  function handleToggle(id: string, anchor: HTMLElement) {
+    const task = tasks.find((candidate) => candidate.id === id)
+    if (task === undefined) return
+
+    const completing = !task.done
+    const rect = anchor.getBoundingClientRect()
+
+    if (completing) {
+      popCheckbox(anchor)
+      ringPulse(anchor)
+    }
+    tapFeedback()
+
+    // Counts are read before the toggle so the earned tier is deterministic.
+    const celebration = resolveCelebration({
+      completing,
+      inToday: task.dueDate !== null,
+      todayRemaining: overdueTasks.length + dueTodayTasks.length,
+      completedToday: countCompletedOn(tasks, today),
+    })
+    toggleTaskById(id)
+    trigger(celebration, rect)
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -87,7 +123,7 @@ function App() {
                     key={task.id}
                     task={task}
                     today={today}
-                    onToggle={toggleTaskById}
+                    onToggle={handleToggle}
                     onEdit={setEditingId}
                   />
                 ))}
@@ -102,7 +138,7 @@ function App() {
                       key={task.id}
                       task={task}
                       today={today}
-                      onToggle={toggleTaskById}
+                      onToggle={handleToggle}
                       onEdit={setEditingId}
                     />
                   ))}
@@ -136,7 +172,7 @@ function App() {
                       key={task.id}
                       task={task}
                       today={today}
-                      onToggle={toggleTaskById}
+                      onToggle={handleToggle}
                       onEdit={setEditingId}
                     />
                   ))}
@@ -150,7 +186,7 @@ function App() {
                     key={task.id}
                     task={task}
                     today={today}
-                    onToggle={toggleTaskById}
+                    onToggle={handleToggle}
                     onEdit={setEditingId}
                   />
                 ))}
@@ -173,7 +209,7 @@ function App() {
                         key={task.id}
                         task={task}
                         today={today}
-                        onToggle={toggleTaskById}
+                        onToggle={handleToggle}
                         onEdit={setEditingId}
                       />
                     ))}
@@ -207,6 +243,8 @@ function App() {
         )}
         </div>
       </main>
+
+      {burst ? <Celebration burst={burst} /> : null}
 
       {(tab === 'inbox' || tab === 'notes') && !anySheetOpen ? (
         <button

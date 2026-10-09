@@ -13,6 +13,50 @@ Capture college tasks quickly and work through them today.
 | `npm run lint` | Oxlint |
 | `npm run icons` | Regenerate every icon in `public/` |
 
+## Motion & motivation (M6)
+
+Completing a task **destroys its row** — in Inbox the task moves to a different
+list, in Today it disappears entirely — so a completion animation cannot live on
+the row itself. `App.tsx` measures the tapped checkbox's `getBoundingClientRect()`
+*before* the state change, then renders a detached `position: fixed` overlay that
+outlives the row. `TaskRow` stays stateless.
+
+| Tier | Fires when | Feedback |
+| --- | --- | --- |
+| tap | every completion | checkbox overshoot + ring pulse + 10ms haptic |
+| milestone | completes 3 / 5 / 10 / 20 / 50 today | particle burst + message + double haptic |
+| clear | the last remaining Today task | larger green burst, 16 particles |
+
+Bursts are rationed on purpose. One on every tap is visual noise by the fifth
+task, which is why the frequent case gets the quiet version.
+
+Tier rules live in `src/celebration.ts` as pure functions and are unit-tested;
+the counts they need are read *before* the toggle so the result is deterministic.
+`src/feedback.ts` holds the Web Animations API and `navigator.vibrate` calls —
+both native, no dependencies.
+
+### Data: `doneAt`
+
+Daily counts need a completion timestamp, so `Task` gained `doneAt`. **This is a
+forward-compatible migration:** `isTask` accepts the field as *absent*, and
+`loadTasks` normalises it to `null`. Tightening the validator to require it would
+make `loadTasks`'s `filter(isTask)` silently drop every task stored before M6.
+`STORAGE_KEY` is deliberately unchanged for the same reason. The regression tests
+for this are in `storage.test.ts` — do not remove them without a replacement.
+
+### Accessibility
+
+`prefers-reduced-motion` is honoured in two places: `feedback.ts` skips spawning
+particles and the pulse ring, and a backstop block in `styles.css` neutralises
+every animation and transition in the app. Under reduced motion the milestone
+message and haptics still fire — only the movement is dropped, so the reward
+does not vanish entirely.
+
+### Not yet built
+
+M6c (progress ring + streak counter), M6d (row enter, sheet exit, tab direction)
+and M6e (deletion collapse, the most complex piece) are planned but unimplemented.
+
 ## PWA icons
 
 Icons are **generated, not hand-edited**. `scripts/generate-icons.mjs` renders the

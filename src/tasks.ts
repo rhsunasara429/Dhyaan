@@ -23,6 +23,16 @@ export function isDueDate(value: unknown): value is string {
   return typeof value === 'string' && DUE_DATE_PATTERN.test(value)
 }
 
+function isDoneAt(value: unknown): boolean {
+  // Absent means the task predates the field (M6); storage.loadTasks fills it
+  // in. Rejecting `undefined` here would silently drop every stored task.
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'number' && Number.isFinite(value))
+  )
+}
+
 export function isTask(value: unknown): value is Task {
   if (typeof value !== 'object' || value === null) return false
   const t = value as Record<string, unknown>
@@ -33,6 +43,7 @@ export function isTask(value: unknown): value is Task {
     t.title.length > 0 &&
     t.title.length <= MAX_TITLE_LENGTH &&
     typeof t.done === 'boolean' &&
+    isDoneAt(t.doneAt) &&
     typeof t.createdAt === 'number' &&
     Number.isFinite(t.createdAt) &&
     (t.dueDate === null || isDueDate(t.dueDate)) &&
@@ -63,6 +74,7 @@ export function buildTask(title: unknown, init?: TaskInit): Task | null {
     id: crypto.randomUUID(),
     title: trimmed,
     done: false,
+    doneAt: null,
     createdAt: Date.now(),
     dueDate,
     area,
@@ -77,10 +89,16 @@ function validateTitle(title: unknown): string | null {
   return trimmed
 }
 
-export function toggleTask(tasks: Task[], id: string): Task[] {
-  return tasks.map((task) =>
-    task.id === id ? { ...task, done: !task.done } : task,
-  )
+export function toggleTask(
+  tasks: Task[],
+  id: string,
+  now: number = Date.now(),
+): Task[] {
+  return tasks.map((task) => {
+    if (task.id !== id) return task
+    const done = !task.done
+    return { ...task, done, doneAt: done ? now : null }
+  })
 }
 
 export function renameTask(

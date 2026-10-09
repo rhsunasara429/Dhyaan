@@ -6,6 +6,11 @@ function formatLocal(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
+/** Local-day key (YYYY-MM-DD) for an epoch timestamp, matching todayLocal(). */
+export function dayKeyFromTimestamp(timestamp: number): string {
+  return formatLocal(new Date(timestamp))
+}
+
 export function todayLocal(now: Date = new Date()): string {
   return formatLocal(now)
 }

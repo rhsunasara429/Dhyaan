@@ -13,6 +13,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     id: 'id',
     title: 'title',
     done: false,
+    doneAt: null,
     createdAt: 0,
     dueDate: null,
     area: null,

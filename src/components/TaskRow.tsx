@@ -3,7 +3,8 @@ import type { Task } from '../types.ts'
 type TaskRowProps = {
   task: Task
   today: string
-  onToggle: (id: string) => void
+  /** Receives the tapped checkbox so the caller can anchor feedback to it. */
+  onToggle: (id: string, anchor: HTMLElement) => void
   onEdit: (id: string) => void
 }
 
@@ -25,7 +26,7 @@ export function TaskRow({ task, today, onToggle, onEdit }: TaskRowProps) {
         role="checkbox"
         aria-checked={task.done}
         aria-label={task.done ? `Mark "${task.title}" as active` : `Mark "${task.title}" as complete`}
-        onClick={() => onToggle(task.id)}
+        onClick={(event) => onToggle(task.id, event.currentTarget)}
       >
         <span aria-hidden="true">
           {task.done ? (

@@ -776,3 +776,150 @@ textarea:focus-visible {
     scrollbar-color: var(--color-border) transparent;
   }
 }
+
+/* ============================================================
+   M6 — Motion & motivation
+   ============================================================ */
+
+/* ---- Completion celebration ---- */
+
+/* Fixed, non-interactive, and above every panel so the burst is never clipped
+   by a scrolling list or a sheet. */
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 2px;
+  background: var(--color-accent);
+  /* One shared keyframe drives every particle; per-particle variation comes
+     from the custom properties set inline by Celebration.tsx. Only transform
+     and opacity animate, so nothing here triggers layout. */
+  animation: particle-fly 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.particle-round {
+  border-radius: 50%;
+}
+
+.celebration-clear .particle {
+  background: var(--color-success);
+}
+
+@keyframes particle-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.9);
+  }
+}
+
+.celebration-message {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  animation: message-rise 1500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.celebration-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-accent);
+  letter-spacing: -0.01em;
+}
+
+.celebration-clear .celebration-title {
+  color: var(--color-success);
+  font-size: var(--text-xl);
+}
+
+.celebration-sub {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+@keyframes message-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -140%) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -140%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -190%) scale(1);
+  }
+}
+
+/* Ring pulse injected by ringPulse() in feedback.ts, appended to <body> so it
+   is not affected by any list or sheet overflow. */
+.complete-ring {
+  position: fixed;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  pointer-events: none;
+  z-index: 59;
+  animation: ring-pulse 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ring-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* ---- Reduced motion ----
+   Celebration.tsx and feedback.ts already avoid spawning particles and the
+   pulse ring when this matches; this block is the backstop for every
+   transition and keyframe already in the file. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The message is still worth showing — it just should not move. */
+  .celebration-message {
+    animation: none;
+    opacity: 1;
+  }
+
+  .particle,
+  .complete-ring {
+    display: none;
+  }
+}
