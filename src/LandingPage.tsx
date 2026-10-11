@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
 import { addDaysLocal, todayLocal } from './dates.ts'
 import { ROUTE_APP, navigate } from './routes.ts'
@@ -51,6 +51,24 @@ function useReveal() {
   return rootRef
 }
 
+/** Live-tracks the OS "reduce motion" setting so looping animations can opt out. */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReduced(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  return reduced
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme()
@@ -69,6 +87,7 @@ export default function LandingPage() {
         <HowItWorksSection />
         <TestimonialsSection />
         <PricingSection />
+        <FaqSection />
         <CtaSection />
       </main>
 
@@ -79,8 +98,17 @@ export default function LandingPage() {
 
 // ─── Header ───────────────────────────────────────────────────────────────
 function Header({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <header className="lp-header">
+    <header className={`lp-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="lp-container lp-header-inner">
         <a className="lp-brand" href="/" aria-label="Dhyaan home">
           <Mark size={24} />
@@ -91,6 +119,7 @@ function Header({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => 
           <a className="lp-nav-link" href="#lp-features">Features</a>
           <a className="lp-nav-link" href="#lp-how">How it works</a>
           <a className="lp-nav-link" href="#lp-pricing">Pricing</a>
+          <a className="lp-nav-link" href="#lp-faq">FAQ</a>
         </nav>
 
         <div className="lp-header-actions">
@@ -152,22 +181,50 @@ function HeroSection() {
           </div>
         </div>
 
-        <HeroPreview />
+        <div className="lp-hero-visual">
+          <HeroPreview />
+          <div className="lp-float-card lp-float-streak" aria-hidden="true">
+            <span className="lp-float-flame"><FlameIcon /></span>
+            <span className="lp-float-copy">
+              <strong>7-day streak</strong>
+              <span>Keep it going 🔥</span>
+            </span>
+          </div>
+          <div className="lp-float-card lp-float-done" aria-hidden="true">
+            <span className="lp-float-check"><CheckIcon size={14} /></span>
+            <span className="lp-float-copy">
+              <strong>Task complete</strong>
+              <span>Nice work today</span>
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   )
 }
 
 // ─── Logo / Social-proof bar ───────────────────────────────────────────────
+const DEVICES = ['Chrome', 'Safari', 'Firefox', 'Edge', 'Android', 'iOS']
+
 function LogoBar() {
   return (
     <div className="lp-logobar" aria-label="Works on all devices">
       <div className="lp-container">
         <p className="lp-logobar-label">Works on every device, every browser</p>
-        <div className="lp-logobar-items">
-          {['Chrome', 'Safari', 'Firefox', 'Edge', 'Android', 'iOS'].map((b) => (
-            <span key={b} className="lp-logobar-item">{b}</span>
-          ))}
+        <div className="lp-logobar-marquee">
+          <div className="lp-logobar-track">
+            <div className="lp-logobar-group">
+              {DEVICES.map((b) => (
+                <span key={b} className="lp-logobar-item">{b}</span>
+              ))}
+            </div>
+            {/* Duplicate set for a seamless loop; hidden from assistive tech. */}
+            <div className="lp-logobar-group" aria-hidden="true">
+              {DEVICES.map((b) => (
+                <span key={`dup-${b}`} className="lp-logobar-item">{b}</span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -441,6 +498,67 @@ function PricingSection() {
   )
 }
 
+// ─── FAQ ──────────────────────────────────────────────────────────────────
+function FaqSection() {
+  const faqs: Array<{ q: string; a: ReactNode }> = [
+    {
+      q: 'Do I need to sign up or create an account?',
+      a: 'No. There is no account, no email, and no password. Open Dhyaan and start capturing — everything is stored on your own device.',
+    },
+    {
+      q: 'Where is my data stored?',
+      a: "Locally, in your browser, on your device. Nothing is uploaded to a server, and nothing syncs anywhere. Clearing your browser data will clear Dhyaan, so keep that in mind.",
+    },
+    {
+      q: "What's the difference between Inbox and Today?",
+      a: 'Inbox holds every task without a date, newest first — a place to empty your head. Today groups dated and overdue tasks so you know exactly what to work on now.',
+    },
+    {
+      q: 'Does it work without an internet connection?',
+      a: 'Yes. Dhyaan installs as a PWA. After your first visit it loads instantly from cache, so you can capture and review tasks offline.',
+    },
+    {
+      q: 'Is it really free?',
+      a: 'Completely. Every feature — tasks, notes, streaks, reminders, offline support — is free forever. No paid tier, no trials, no upsells.',
+    },
+  ]
+
+  return (
+    <section id="lp-faq" className="lp-section lp-faq-section" aria-labelledby="lp-faq-title">
+      <div className="lp-container lp-faq-inner">
+        <div className="lp-section-head lp-reveal-group">
+          <p className="lp-eyebrow lp-reveal">FAQ</p>
+          <h2 id="lp-faq-title" className="lp-section-title lp-reveal">
+            Questions, answered.
+          </h2>
+          <p className="lp-section-lead lp-reveal">
+            The short version: it is a free, private, offline task manager
+            built for students — and nothing more.
+          </p>
+        </div>
+
+        <ul className="lp-faq-list lp-reveal-group" role="list">
+          {faqs.map((item) => (
+            <li key={item.q} className="lp-faq-item lp-reveal">
+              <details className="lp-faq-details">
+                <summary className="lp-faq-q">
+                  <span>{item.q}</span>
+                  <span className="lp-faq-chevron" aria-hidden="true">
+                    <ChevronIcon />
+                  </span>
+                </summary>
+                <div className="lp-faq-a">
+                  <p>{item.a}</p>
+                </div>
+              </details>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
 // ─── Final CTA band ───────────────────────────────────────────────────────
 function CtaSection() {
   return (
@@ -485,6 +603,7 @@ function Footer() {
           <a className="lp-footer-link" href="#lp-features">Features</a>
           <a className="lp-footer-link" href="#lp-how">How it works</a>
           <a className="lp-footer-link" href="#lp-pricing">Pricing</a>
+          <a className="lp-footer-link" href="#lp-faq">FAQ</a>
         </nav>
 
         <p className="lp-footer-copy">
@@ -506,9 +625,17 @@ function Mark({ size }: { size: number }) {
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" />
-      <circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" strokeWidth="4" />
-      <circle cx="50" cy="50" r="10" fill="var(--color-accent)" />
+      {/* Open ring (enso): a near-full circle stroked as an arc, leaving a gap
+          at the top — the same mark as the installed app icon. */}
+      <path
+        d="M 78.01 26.20 A 40 40 0 1 1 21.99 26.20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="7.2"
+        strokeLinecap="round"
+      />
+      {/* Centre bindu: the single point of focus. */}
+      <circle cx="50" cy="50" r="11" fill="var(--color-accent)" />
     </svg>
   )
 }
@@ -676,6 +803,22 @@ function StarIcon() {
   )
 }
 
+function FlameIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12 2c1.5 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1 .3-1.8.8-2.5C7 9 5.5 10.7 5.5 13a6.5 6.5 0 0 0 13 0C18.5 8 16 6 12 2z" />
+    </svg>
+  )
+}
+
+function ChevronIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 // ─── Preview pieces (isolated lookalikes) ─────────────────────────────────
 function PreviewCheck({ done = false }: { done?: boolean }) {
   return (
@@ -797,42 +940,112 @@ function DemoPhone({
 }
 
 function HeroPreview() {
+  const reducedMotion = usePrefersReducedMotion()
+  const [tab, setTab] = useState<'inbox' | 'today' | 'notes'>('inbox')
+
+  // Auto-cycle the demo so every screen gets seen. Skipped entirely when the
+  // visitor prefers reduced motion — then it rests on the Inbox, fully static.
+  useEffect(() => {
+    if (reducedMotion) return
+    const order: Array<'inbox' | 'today' | 'notes'> = ['inbox', 'today', 'notes']
+    let i = 0
+    const id = window.setInterval(() => {
+      i = (i + 1) % order.length
+      setTab(order[i])
+    }, 3800)
+    return () => window.clearInterval(id)
+  }, [reducedMotion])
+
   return (
     <figure
       className="lp-preview lp-preview-frame lp-preview-phone lp-hero-preview"
       role="img"
-      aria-label="Dhyaan's Inbox showing a just-captured task settling in above two more, with Inbox, Today and Notes tabs."
+      aria-label="Dhyaan cycling through its Inbox, Today and Notes screens: capturing a task, seeing overdue and due-today items, and jotting a note."
     >
       <div className="lp-preview-head">
         <Mark size={20} />
         <span className="lp-preview-app">Dhyaan</span>
       </div>
       <div className="lp-preview-body">
-        <p className="lp-preview-h2">Inbox</p>
-        <div className="lp-preview-slot">
-          <ul className="lp-preview-list">
-            <PreviewRow title="Submit DBMS assignment" settling />
-            <PreviewRow title="Read chapter 4 before the seminar" />
-            <PreviewRow title="Renew library books" />
-          </ul>
-          <div className="lp-preview-composer" aria-hidden="true">
-            <span className="lp-preview-compose-dot" />
-            <span className="lp-preview-compose-text">Submit DBMS assignment</span>
-            <span className="lp-preview-save">Save</span>
-          </div>
+        <div className="lp-hero-screen" key={tab} data-screen={tab}>
+          {tab === 'inbox' ? <HeroInboxScreen /> : null}
+          {tab === 'today' ? <HeroTodayScreen /> : null}
+          {tab === 'notes' ? <HeroNotesScreen /> : null}
         </div>
-        <p className="lp-preview-label">Completed</p>
-        <ul className="lp-preview-list">
-          <PreviewRow title="Email Prof. Nair about the lab slot" done />
-        </ul>
       </div>
       <span className="lp-preview-fab" aria-hidden="true"><FabGlyph /></span>
-      <div className="lp-preview-tabs" data-active="inbox">
-        <span className="lp-preview-tab is-active"><InboxIcon />Inbox</span>
-        <span className="lp-preview-tab"><TodayIcon />Today</span>
-        <span className="lp-preview-tab"><NotesIcon />Notes</span>
+      <div className="lp-preview-tabs" data-active={tab}>
+        <span className={tab === 'inbox' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}><InboxIcon />Inbox</span>
+        <span className={tab === 'today' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}><TodayIcon />Today</span>
+        <span className={tab === 'notes' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}><NotesIcon />Notes</span>
       </div>
     </figure>
+  )
+}
+
+function HeroInboxScreen() {
+  return (
+    <>
+      <p className="lp-preview-h2">Inbox</p>
+      <div className="lp-preview-slot">
+        <ul className="lp-preview-list">
+          <PreviewRow title="Submit DBMS assignment" settling />
+          <PreviewRow title="Read chapter 4 before the seminar" />
+          <PreviewRow title="Renew library books" />
+        </ul>
+        <div className="lp-preview-composer" aria-hidden="true">
+          <span className="lp-preview-compose-dot" />
+          <span className="lp-preview-compose-text">Submit DBMS assignment</span>
+          <span className="lp-preview-save">Save</span>
+        </div>
+      </div>
+      <p className="lp-preview-label">Completed</p>
+      <ul className="lp-preview-list">
+        <PreviewRow title="Email Prof. Nair about the lab slot" done />
+      </ul>
+    </>
+  )
+}
+
+function HeroTodayScreen() {
+  const today = todayLocal()
+  const yesterday = addDaysLocal(today, -1)
+
+  return (
+    <>
+      <p className="lp-preview-h2">Today</p>
+      <p className="lp-preview-label">Overdue</p>
+      <ul className="lp-preview-list">
+        <PreviewRow title="Submit the lab record" overdue meta={`College · ${yesterday}`} />
+      </ul>
+      <ul className="lp-preview-list lp-preview-today-list">
+        <PreviewRow title="Submit DBMS assignment" meta={today} />
+        <PreviewRow title="Submit the attendance sheet" meta={`College · ${today}`} />
+      </ul>
+      <span className="lp-preview-toggle">Upcoming (2)</span>
+    </>
+  )
+}
+
+function HeroNotesScreen() {
+  return (
+    <>
+      <p className="lp-preview-h2">Notes</p>
+      <ul className="lp-preview-list">
+        <li className="lp-preview-row lp-preview-note">
+          <span className="lp-preview-note-title">Lab slot moved to Thursday</span>
+          <span className="lp-preview-meta">Room 204 · Prof. Nair</span>
+        </li>
+        <li className="lp-preview-row lp-preview-note">
+          <span className="lp-preview-note-title">Reference for essay</span>
+          <span className="lp-preview-meta">library.ca/reading-list</span>
+        </li>
+        <li className="lp-preview-row lp-preview-note">
+          <span className="lp-preview-note-title">Group project roles</span>
+          <span className="lp-preview-meta">Priya — research, me — slides</span>
+        </li>
+      </ul>
+    </>
   )
 }
 

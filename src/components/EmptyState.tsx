@@ -5,8 +5,8 @@ export function EmptyState() {
         <path d="M6 28l6-16h24l6 16" strokeLinecap="round" strokeLinejoin="round"/>
         <rect x="6" y="28" width="36" height="12" rx="2"/>
       </svg>
-      <p className="empty-title">No tasks yet.</p>
-      <p className="empty-hint">Tap + to capture something.</p>
+      <p className="empty-title">Your inbox is clear.</p>
+      <p className="empty-hint">Tap + the moment something lands in your head — sort it out later.</p>
     </div>
   )
 }

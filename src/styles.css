@@ -222,6 +222,31 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Staggered row entrance — rows cascade in as a tab mounts. Only the first
+   several rows are delayed; a long list still feels snappy. Gated behind
+   reduced-motion below, where it collapses to the plain fade. */
+.task-list > *,
+.note-list > * {
+  animation: row-in var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.task-list > *:nth-child(1),
+.note-list > *:nth-child(1) { animation-delay: 20ms; }
+.task-list > *:nth-child(2),
+.note-list > *:nth-child(2) { animation-delay: 60ms; }
+.task-list > *:nth-child(3),
+.note-list > *:nth-child(3) { animation-delay: 100ms; }
+.task-list > *:nth-child(4),
+.note-list > *:nth-child(4) { animation-delay: 140ms; }
+.task-list > *:nth-child(5),
+.note-list > *:nth-child(5) { animation-delay: 180ms; }
+.task-list > *:nth-child(n + 6),
+.note-list > *:nth-child(n + 6) { animation-delay: 210ms; }
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .app-main h2 {
   margin: 0 0 var(--space-3);
   font-size: var(--text-xl);
@@ -328,6 +353,44 @@ textarea:focus-visible {
   font-weight: var(--weight-semibold);
 }
 
+/* Tab label + live count badge (Inbox / Today) */
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab.active .tab-badge {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+/* Overdue work escalates the Today badge to the alert colour. */
+.tab-badge-alert {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+.tab.active .tab-badge-alert {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
 .task-list {
   list-style: none;
   margin: var(--space-3) 0 0;
@@ -337,7 +400,48 @@ textarea:focus-visible {
   gap: var(--space-2);
 }
 
+/* Row is now a swipe surface sitting above a hidden action layer. */
+.task-row-wrap,
+.note-row-wrap {
+  position: relative;
+}
+
+/* The coloured actions revealed as the row slides aside. Clipped to the row's
+   rounded shape by its own overflow, so the surface's box-shadow stays crisp. */
+.task-row-actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.task-row-action {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.task-row-action-complete {
+  justify-content: flex-start;
+  background: var(--color-success);
+}
+
+.task-row-action-delete {
+  justify-content: flex-end;
+  background: var(--color-danger);
+}
+
 .task-row {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -347,6 +451,8 @@ textarea:focus-visible {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
   overflow-wrap: break-word;
+  /* Let the browser pan vertically; the swipe hook owns the horizontal axis. */
+  touch-action: pan-y;
   transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -747,11 +853,14 @@ textarea:focus-visible {
 }
 
 .note-row {
+  position: relative;
+  z-index: 1;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   background: var(--color-surface-elevated);
   box-shadow: var(--shadow-xs);
   overflow-wrap: break-word;
+  touch-action: pan-y;
   transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -1070,6 +1179,13 @@ textarea:focus-visible {
 /* ---- Today summary (M6c): progress ring + streak ---- */
 /* h2.today-title: element+class keeps this ahead of the .app-main h2 rule
    above without touching the Inbox/Notes headings. */
+.today-greeting {
+  margin: 0 0 2px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
 h2.today-title {
   margin: 0 0 var(--space-3);
   font-family: var(--font-display);
@@ -1250,7 +1366,11 @@ h2.today-title {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border-subtle);
-  transition: background-color var(--transition-slow), border-color var(--transition-slow);
+  transition: background-color var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow);
+}
+.lp-header.is-scrolled {
+  box-shadow: var(--shadow-sm);
+  border-bottom-color: var(--color-border);
 }
 
 .lp-header-inner {
@@ -1340,6 +1460,8 @@ h2.today-title {
 }
 
 .lp-btn-primary {
+  position: relative;
+  overflow: hidden;
   min-height: var(--tap-min);
   padding: 0 var(--space-5);
   font-size: var(--text-base);
@@ -1347,6 +1469,17 @@ h2.today-title {
   color: var(--color-accent-text);
   border: 1px solid var(--color-accent);
   box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 4px 12px rgba(180,83,9,.3);
+}
+.lp-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  pointer-events: none;
 }
 .lp-btn-primary:hover {
   background: var(--color-accent-hover);
@@ -1358,6 +1491,8 @@ h2.today-title {
 
 /* CTA variant — larger, with glow */
 .lp-btn-cta {
+  position: relative;
+  overflow: hidden;
   min-height: 52px;
   padding: 0 var(--space-6);
   font-size: var(--text-lg);
@@ -1366,6 +1501,17 @@ h2.today-title {
   border: 1px solid rgba(255,255,255,.3);
   box-shadow: 0 4px 24px rgba(0,0,0,.25);
   border-radius: var(--radius-lg);
+}
+.lp-btn-cta::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(180,83,9,.18), transparent);
+  pointer-events: none;
 }
 .lp-btn-cta:hover {
   background: #fff8f0;
@@ -1569,6 +1715,85 @@ h2.today-title {
   justify-self: center;
 }
 
+/* Hero visual wrapper — holds the phone plus floating feature chips */
+.lp-hero-visual {
+  position: relative;
+  justify-self: center;
+  width: 100%;
+  max-width: 380px;
+}
+
+.lp-float-card {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-lg);
+}
+
+.lp-float-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.lp-float-copy strong {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+.lp-float-copy span {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.lp-float-flame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  flex: none;
+}
+
+.lp-float-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: rgba(4, 120, 87, 0.12);
+  color: var(--color-success);
+  flex: none;
+}
+
+.lp-float-streak {
+  top: 12%;
+  left: -28px;
+}
+
+.lp-float-done {
+  bottom: 16%;
+  right: -24px;
+}
+
+@media (max-width: 900px) {
+  .lp-float-streak { left: 0; }
+  .lp-float-done { right: 0; }
+}
+
+@media (max-width: 560px) {
+  .lp-float-card { display: none; }
+}
+
 /* ── Logo bar ──────────────────────────────────────────────────── */
 
 .lp-logobar {
@@ -1588,12 +1813,25 @@ h2.today-title {
   text-align: center;
 }
 
-.lp-logobar-items {
+/* Marquee viewport — clips the scrolling track, with soft edge fades. On
+   small screens it falls back to a centred wrap (see responsive rules). */
+.lp-logobar-marquee {
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.lp-logobar-track {
   display: flex;
-  flex-wrap: wrap;
+  width: max-content;
+}
+
+.lp-logobar-group {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-3) var(--space-5);
+  gap: var(--space-5);
+  padding-right: var(--space-5);
 }
 
 .lp-logobar-item {
@@ -1602,6 +1840,7 @@ h2.today-title {
   color: var(--color-text-secondary);
   opacity: .6;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* ── Features grid ─────────────────────────────────────────────── */
@@ -1646,6 +1885,10 @@ h2.today-title {
   background: var(--color-accent-soft);
   color: var(--color-accent);
   margin-bottom: var(--space-1);
+  transition: transform var(--transition-base), background-color var(--transition-base);
+}
+.lp-feature-card:hover .lp-feature-icon {
+  transform: scale(1.08);
 }
 
 .lp-feature-title {
@@ -1939,6 +2182,90 @@ h2.today-title {
   margin-top: 1px;
 }
 
+/* ── FAQ ───────────────────────────────────────────────────────── */
+
+.lp-faq-section {
+  background: var(--color-surface);
+}
+
+.lp-faq-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lp-faq-item {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+.lp-faq-item:hover {
+  border-color: var(--color-border);
+}
+
+.lp-faq-details {
+  display: block;
+}
+
+.lp-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-normal);
+}
+.lp-faq-q::-webkit-details-marker { display: none; }
+.lp-faq-q:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+.lp-faq-chevron {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  transition: transform var(--transition-base), background-color var(--transition-base);
+}
+.lp-faq-details[open] .lp-faq-chevron {
+  transform: rotate(180deg);
+}
+
+.lp-faq-a {
+  padding: 0 var(--space-4) var(--space-4);
+}
+.lp-faq-a p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  max-width: 62ch;
+}
+
 /* ── Closing CTA ───────────────────────────────────────────────── */
 
 .lp-cta-section {
@@ -2180,6 +2507,24 @@ h2.today-title {
   color: var(--color-text-secondary);
 }
 
+/* Note rows (Notes demo screen) — same shell, no checkbox */
+.lp-preview-note {
+  align-items: flex-start;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+.lp-preview-note-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* Hero screen swap — one .lp-hero-screen is mounted per tab, keyed, so the
+   animation replays on each switch. */
+.lp-hero-screen {
+  display: block;
+}
+
 .lp-preview-label {
   margin: var(--space-3) 0 var(--space-1);
   font-size: var(--text-xs);
@@ -2375,9 +2720,35 @@ h2.today-title {
     animation-delay: 1100ms;
   }
 
+  /* Hero demo screen swap (auto-cycling Inbox → Today → Notes) */
+  .lp-root .lp-hero-screen {
+    animation: lp-screen-in 480ms cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .lp-root .lp-hero-screen > *:nth-child(1) { animation: lp-rise 380ms cubic-bezier(0.16,1,0.3,1) both; animation-delay: 40ms; }
+  .lp-root .lp-hero-screen > *:nth-child(2) { animation: lp-rise 380ms cubic-bezier(0.16,1,0.3,1) both; animation-delay: 110ms; }
+  .lp-root .lp-hero-screen > *:nth-child(3) { animation: lp-rise 380ms cubic-bezier(0.16,1,0.3,1) both; animation-delay: 180ms; }
+  .lp-root .lp-hero-screen > *:nth-child(4) { animation: lp-rise 380ms cubic-bezier(0.16,1,0.3,1) both; animation-delay: 250ms; }
+
+  /* Badge "live" dot pulse */
+  .lp-badge-dot { animation: lp-pulse 2.4s ease-in-out infinite; }
+
+  /* CTA button sheen sweep */
+  .lp-btn-primary::after,
+  .lp-btn-cta::after {
+    animation: lp-sheen 4.5s ease-in-out infinite;
+  }
+
   /* Orb gentle drift */
   .lp-hero-orb-1 { animation: lp-drift 12s ease-in-out infinite alternate; }
   .lp-hero-orb-2 { animation: lp-drift 16s ease-in-out infinite alternate-reverse; }
+
+  /* Floating hero chips */
+  .lp-float-streak { animation: lp-float 6s ease-in-out infinite; }
+  .lp-float-done { animation: lp-float 6s ease-in-out 1.5s infinite; }
+
+  /* Devices marquee (desktop only — mobile uses a static wrap) */
+  .lp-logobar-track { animation: lp-marquee 26s linear infinite; }
+  .lp-logobar-marquee:hover .lp-logobar-track { animation-play-state: paused; }
 
   /* Scroll reveal */
   .lp-root[data-motion='on'] .lp-reveal {
@@ -2431,6 +2802,33 @@ h2.today-title {
   to { transform: translateY(-30px) scale(1.04); }
 }
 
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes lp-screen-in {
+  from { opacity: 0; transform: translateX(10px) scale(0.99); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes lp-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(4,120,87,.15); }
+  50% { box-shadow: 0 0 0 6px rgba(4,120,87,.05); }
+}
+
+@keyframes lp-sheen {
+  0% { transform: translateX(-120%) skewX(-16deg); opacity: 0; }
+  15% { opacity: .55; }
+  60% { transform: translateX(220%) skewX(-16deg); opacity: 0; }
+  100% { transform: translateX(220%) skewX(-16deg); opacity: 0; }
+}
+
+@keyframes lp-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 /* ── Responsive ────────────────────────────────────────────────── */
 
 @media (min-width: 768px) {
@@ -2451,6 +2849,10 @@ h2.today-title {
     max-width: 360px;
   }
 
+  .lp-hero-visual {
+    justify-self: start;
+  }
+
   .lp-steps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: start;
@@ -2464,6 +2866,11 @@ h2.today-title {
 
   .lp-pricing-features {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .lp-faq-inner {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: var(--space-6);
   }
 }
 
@@ -2479,8 +2886,51 @@ h2.today-title {
   .lp-hero-actions .lp-btn { width: 100%; }
 
   .lp-pricing-features { grid-template-columns: 1fr; }
+
+  /* Devices: stop the marquee, show a tidy centred wrap instead. */
+  .lp-logobar-marquee {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .lp-logobar-track {
+    display: block;
+    width: 100%;
+    animation: none;
+  }
+  .lp-logobar-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2) var(--space-4);
+    padding-right: 0;
+  }
+  .lp-logobar-group[aria-hidden='true'] { display: none; }
 }
 
 @media (max-width: 560px) {
   .lp-nav { display: none; }
+}
+
+/* Reduced motion: no looping marquee anywhere. Show a centred wrap and drop
+   the duplicate set so nothing is clipped. */
+@media (prefers-reduced-motion: reduce) {
+  .lp-logobar-marquee {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .lp-logobar-track {
+    display: block;
+    width: 100%;
+    animation: none;
+  }
+  .lp-logobar-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2) var(--space-4);
+    padding-right: 0;
+  }
+  .lp-logobar-group[aria-hidden='true'] { display: none; }
 }

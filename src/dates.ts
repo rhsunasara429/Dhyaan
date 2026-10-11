@@ -31,3 +31,10 @@ export function formatLongDate(day: string, locale: string = 'en-US'): string {
     day: 'numeric',
   })
 }
+
+/** Time-of-day greeting for the Today header — "Morning", "Afternoon", "Evening". */
+export function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}

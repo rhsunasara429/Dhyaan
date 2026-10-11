@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDaysLocal, formatLongDate, todayLocal } from './dates.ts'
+import { addDaysLocal, formatLongDate, greetingForHour, todayLocal } from './dates.ts'
 
 describe('todayLocal', () => {
   it('returns YYYY-MM-DD with zero padding', () => {
@@ -33,5 +33,17 @@ describe('formatLongDate', () => {
 
   it('zero-pads single-digit days', () => {
     expect(formatLongDate('2026-10-11')).toBe('Sunday, October 11')
+  })
+})
+
+describe('greetingForHour', () => {
+  it('greets by time of day', () => {
+    expect(greetingForHour(6)).toBe('Good morning')
+    expect(greetingForHour(11)).toBe('Good morning')
+    expect(greetingForHour(12)).toBe('Good afternoon')
+    expect(greetingForHour(16)).toBe('Good afternoon')
+    expect(greetingForHour(17)).toBe('Good evening')
+    expect(greetingForHour(23)).toBe('Good evening')
+    expect(greetingForHour(0)).toBe('Good morning')
   })
 })

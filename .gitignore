@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated logo-concept previews (output of scripts/preview-concepts.mjs)
+preview/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -9,7 +9,7 @@ import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
 import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
-import { todayLocal, formatLongDate } from './dates.ts'
+import { todayLocal, formatLongDate, greetingForHour } from './dates.ts'
 import { selectNotesNewestFirst } from './notes.ts'
 import {
   selectCompleted,
@@ -115,12 +115,18 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-title-group">
-          <svg className="logo-mark" width="20" height="20" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="3"/>
-            <circle cx="50" cy="28" r="20" fill="currentColor"/>
-            <circle cx="32" cy="62" r="20" fill="currentColor"/>
-            <circle cx="68" cy="62" r="20" fill="currentColor"/>
-            <circle cx="50" cy="50" r="8" fill="var(--color-accent)"/>
+          <svg className="logo-mark" width="20" height="20" viewBox="0 0 100 100" aria-hidden="true">
+            {/* Open ring (enso): a near-full circle stroked as an arc, leaving a
+                gap at the top — matches the installed app icon. */}
+            <path
+              d="M 78.01 26.20 A 40 40 0 1 1 21.99 26.20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="7.2"
+              strokeLinecap="round"
+            />
+            {/* Centre bindu: the single point of focus. */}
+            <circle cx="50" cy="50" r="11" fill="var(--color-accent)" />
           </svg>
           <h1 className="app-title">Dhyaan</h1>
         </div>
@@ -149,6 +155,7 @@ function App() {
                     today={today}
                     onToggle={handleToggle}
                     onEdit={setEditingId}
+                    onDelete={deleteTaskById}
                   />
                 ))}
               </ul>
@@ -164,6 +171,7 @@ function App() {
                       today={today}
                       onToggle={handleToggle}
                       onEdit={setEditingId}
+                      onDelete={deleteTaskById}
                     />
                   ))}
                 </ul>
@@ -172,6 +180,7 @@ function App() {
           </section>
         ) : tab === 'today' ? (
           <section aria-label="Today">
+            <p className="today-greeting">{greetingForHour(new Date().getHours())}</p>
             <h2 className="today-title">{formatLongDate(today)}</h2>
             {todayProgress.denominator > 0 ? (
               <div className="today-summary">
@@ -202,9 +211,9 @@ function App() {
                   <line x1="14" y1="4" x2="14" y2="12" strokeLinecap="round" />
                   <line x1="34" y1="4" x2="34" y2="12" strokeLinecap="round" />
                 </svg>
-                <p className="empty-title">Nothing here yet.</p>
+                <p className="empty-title">Nothing due today.</p>
                 <p className="empty-hint">
-                  Tasks due today or overdue will appear here.
+                  Give a task a date and it will show up here, ready to work through.
                 </p>
               </div>
             ) : null}
@@ -219,6 +228,7 @@ function App() {
                       today={today}
                       onToggle={handleToggle}
                       onEdit={setEditingId}
+                      onDelete={deleteTaskById}
                     />
                   ))}
                 </ul>
@@ -233,6 +243,7 @@ function App() {
                     today={today}
                     onToggle={handleToggle}
                     onEdit={setEditingId}
+                    onDelete={deleteTaskById}
                   />
                 ))}
               </ul>
@@ -256,6 +267,7 @@ function App() {
                         today={today}
                         onToggle={handleToggle}
                         onEdit={setEditingId}
+                        onDelete={deleteTaskById}
                       />
                     ))}
                   </ul>
@@ -275,12 +287,12 @@ function App() {
                    <line x1="16" y1="32" x2="24" y2="32" strokeLinecap="round" />
                 </svg>
                 <p className="empty-title">No notes yet.</p>
-                <p className="empty-hint">Tap + to jot something down.</p>
+                <p className="empty-hint">Room numbers, links, half-formed ideas — tap + to keep them close.</p>
               </div>
             ) : (
               <ul className="note-list">
                 {sortedNotes.map((note) => (
-                  <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} />
+                  <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} onDelete={deleteNoteById} />
                 ))}
               </ul>
             )}
@@ -352,7 +364,12 @@ function App() {
             <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
             <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
           </svg>
-          Inbox
+          <span className="tab-label">
+            Inbox
+            {inboxTasks.length > 0 ? (
+              <span className="tab-badge">{inboxTasks.length}</span>
+            ) : null}
+          </span>
         </button>
         <button
           type="button"
@@ -371,7 +388,14 @@ function App() {
             <path d="m6.34 17.66-1.41 1.41"/>
             <path d="m19.07 4.93-1.41 1.41"/>
           </svg>
-          Today
+          <span className="tab-label">
+            Today
+            {openTodayCount > 0 ? (
+              <span className={overdueTasks.length > 0 ? 'tab-badge tab-badge-alert' : 'tab-badge'}>
+                {openTodayCount}
+              </span>
+            ) : null}
+          </span>
         </button>
         <button
           type="button"

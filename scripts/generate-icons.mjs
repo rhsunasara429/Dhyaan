@@ -17,21 +17,23 @@ import { fileURLToPath } from 'node:url';
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
-/* The mark: a stylized lotus/meditation symbol representing mindfulness.
- * Design: Three lotus petals arranged in a mandala pattern with a centered
- * meditation circle, all within a 100x100 viewBox. The design is geometric,
- * modern, and recognizable at small sizes. */
+/* The mark: "Bindu + Open Ring" — the single point of focus.
+ *
+ * A solid centre bindu (the one point the mind returns to in dhyana) held in
+ * a calm ring that is left OPEN at the top. The opening is an ensō: a circle
+ * drawn in one breath, never perfectly closed — the present moment, openness,
+ * not rigidity. Together they are Dhyaan's whole thesis, "scattered attention
+ * becoming a single point of focus", in one glyph.
+ *
+ * Everything is a circle or an arc, so it rasterizes as a signed-distance test
+ * with no anti-aliasing library. The 100x100 viewBox keeps the ring centred. */
 const MARK = {
-  // Center meditation dot
-  centerDot: 8,
-  // Three petal arcs (top, bottom-left, bottom-right)
-  petals: [
-    { cx: 50, cy: 28, r: 20 },  // top petal
-    { cx: 32, cy: 62, r: 20 },  // bottom-left petal
-    { cx: 68, cy: 62, r: 20 },  // bottom-right petal
-  ],
-  // Outer ring for cohesion
-  outerRing: { r: 44, stroke: 3 },
+  // Solid centre bindu — the focal point.
+  bindu: 11,
+  // The ring: radius 40, ~7.2 thick, cut by a gap centred on "up".
+  ring: { r: 40, stroke: 7.2 },
+  // Half-angle of the opening, in radians (~24deg -> ~48deg total gap).
+  gapHalfAngle: 0.42,
 };
 
 /* Light/dark accents, mirrored from --color-accent in src/styles.css.
@@ -40,12 +42,18 @@ const MARK = {
 const LIGHT = '#b45309';  // Deep turmeric/saffron
 const DARK = '#f59e0b';   // Brighter amber for dark mode
 
-/* Mark scale as a fraction of the canvas. The outer ring's edge sits at
- * 2*(42+2.5)/100 = 89% of the canvas width, so these are really just a
+/* The installed home-screen tile: a deep-turmeric -> warmer gradient with a
+ * white mark, so the icon is bold and unmistakable on any wallpaper. Mirrors
+ * the "calm & mindful" palette rather than introducing new hues. */
+const TILE_TOP = '#92440e';    // deep turmeric (top of gradient)
+const TILE_BOTTOM = '#bf6010'; // warmer turmeric (bottom of gradient)
+
+/* Mark scale as a fraction of the canvas. The ring's outer edge sits at
+ * 2*(40+3.6)/100 = 87.2% of the canvas width, so these are really just a
  * choice of how much padding to leave:
  *   - `any` icons fill the tile more boldly.
  *   - Android's maskable safe zone guarantees a centred circle of 80%
- *     diameter across every mask shape, so 0.86 -> 76.5% stays inside it. */
+ *     diameter across every mask shape, so 0.86 -> 75% stays inside it. */
 const SCALE_ANY = 0.92;
 const SCALE_MASKABLE = 0.86;
 
@@ -53,32 +61,28 @@ const WHITE = '#ffffff';
 const BLACK = '#000000';
 const SUPERSAMPLE = 4;
 
+const TAU = Math.PI * 2;
+
 /* ---------- rasteriser ---------- */
 
 function insideMark(x, y, centerX, centerY) {
   const dx = x - centerX;
   const dy = y - centerY;
-  const distFromCenter = Math.hypot(dx, dy);
-  
-  // Center meditation dot
-  if (distFromCenter <= MARK.centerDot) {
-    return true;
+  const dist = Math.hypot(dx, dy);
+
+  // Solid centre bindu.
+  if (dist <= MARK.bindu) return true;
+
+  // Open ring: present everywhere except within the gap centred on "up".
+  if (Math.abs(dist - MARK.ring.r) <= MARK.ring.stroke / 2) {
+    let angle = Math.atan2(dy, dx); // -PI..PI ; up = -PI/2
+    if (angle < 0) angle += TAU;    // 0..TAU ; up = 3PI/2
+    const gapCenter = 1.5 * Math.PI;
+    let diff = Math.abs(angle - gapCenter);
+    if (diff > Math.PI) diff = TAU - diff;
+    if (diff > MARK.gapHalfAngle) return true;
   }
-  
-  // Outer ring
-  const ringDist = Math.abs(distFromCenter - MARK.outerRing.r);
-  if (ringDist <= MARK.outerRing.stroke / 2) {
-    return true;
-  }
-  
-  // Three lotus petals (filled circles)
-  for (const petal of MARK.petals) {
-    const petalDist = Math.hypot(x - petal.cx, y - petal.cy);
-    if (petalDist <= petal.r) {
-      return true;
-    }
-  }
-  
+
   return false;
 }
 
@@ -87,16 +91,30 @@ function hexToRgb(hex) {
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
-function render(size, { scale, color, background }) {
+function render(size, { scale, color, background, gradient }) {
   const unit = (size / 100) * scale; // pixels per view unit
   const mid = size / 2;
   const [mr, mg, mb] = hexToRgb(color);
   const bg = background ? hexToRgb(background) : null;
+  // Two-stop vertical gradient (top -> bottom), used for the home-screen tile.
+  const grad = gradient
+    ? [hexToRgb(gradient.top), hexToRgb(gradient.bottom)]
+    : null;
   const out = Buffer.alloc(size * size * 4);
   const step = 1 / SUPERSAMPLE;
   const total = SUPERSAMPLE * SUPERSAMPLE;
 
   for (let y = 0; y < size; y++) {
+    // Background colour for this row: gradient stop, or a flat fill, or none.
+    let rowBg = bg;
+    if (grad) {
+      const t = size > 1 ? y / (size - 1) : 0;
+      rowBg = [
+        Math.round(grad[0][0] + (grad[1][0] - grad[0][0]) * t),
+        Math.round(grad[0][1] + (grad[1][1] - grad[0][1]) * t),
+        Math.round(grad[0][2] + (grad[1][2] - grad[0][2]) * t),
+      ];
+    }
     for (let x = 0; x < size; x++) {
       let hits = 0;
       for (let sy = 0; sy < SUPERSAMPLE; sy++) {
@@ -111,11 +129,11 @@ function render(size, { scale, color, background }) {
       }
       const cov = hits / total;
       const i = (y * size + x) * 4;
-      if (bg) {
+      if (rowBg) {
         // Opaque tile: blend mark over background so edges stay smooth.
-        out[i] = Math.round(bg[0] + (mr - bg[0]) * cov);
-        out[i + 1] = Math.round(bg[1] + (mg - bg[1]) * cov);
-        out[i + 2] = Math.round(bg[2] + (mb - bg[2]) * cov);
+        out[i] = Math.round(rowBg[0] + (mr - rowBg[0]) * cov);
+        out[i + 1] = Math.round(rowBg[1] + (mg - rowBg[1]) * cov);
+        out[i + 2] = Math.round(rowBg[2] + (mb - rowBg[2]) * cov);
         out[i + 3] = 255;
       } else {
         out[i] = mr;
@@ -174,16 +192,28 @@ function encodePng(size, rgba) {
 
 /* ---------- svg ---------- */
 
+/* The open ring as an SVG arc path. SVG arcs can't express a gap directly, so
+ * we draw a near-full circle as a stroked path that starts and ends inside the
+ * gap, leaving the opening at the top. Angles are measured in SVG space where
+ * 0deg points right and positive is clockwise; "up" is -90deg (270deg). */
 function faviconSvg(color) {
+  const r = MARK.ring.r;
+  const half = MARK.gapHalfAngle;
+  // Start/end just past the gap, on either side of the top (270deg).
+  const startDeg = 270 + (half * 180) / Math.PI; // a little clockwise of up
+  const endDeg = 270 - (half * 180) / Math.PI;   // a little counter-clockwise
+  const rad = (deg) => (deg * Math.PI) / 180;
+  const sx = 50 + r * Math.cos(rad(startDeg));
+  const sy = 50 + r * Math.sin(rad(startDeg));
+  const ex = 50 + r * Math.cos(rad(endDeg));
+  const ey = 50 + r * Math.sin(rad(endDeg));
+  // large-arc=1 (the long way around), sweep=1 (clockwise) -> gap stays at top.
+  const arc = `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 1 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Outer ring -->
-  <circle cx="50" cy="50" r="${MARK.outerRing.r}" fill="none" stroke="${color}" stroke-width="${MARK.outerRing.stroke}"/>
-  <!-- Three lotus petals -->
-  <circle cx="${MARK.petals[0].cx}" cy="${MARK.petals[0].cy}" r="${MARK.petals[0].r}" fill="${color}"/>
-  <circle cx="${MARK.petals[1].cx}" cy="${MARK.petals[1].cy}" r="${MARK.petals[1].r}" fill="${color}"/>
-  <circle cx="${MARK.petals[2].cx}" cy="${MARK.petals[2].cy}" r="${MARK.petals[2].r}" fill="${color}"/>
-  <!-- Center meditation dot -->
-  <circle cx="50" cy="50" r="${MARK.centerDot}" fill="${color}"/>
+  <!-- Open ring (enso): stroked arc that leaves a gap at the top -->
+  <path d="${arc}" fill="none" stroke="${color}" stroke-width="${MARK.ring.stroke}" stroke-linecap="round"/>
+  <!-- Centre bindu: the single point of focus -->
+  <circle cx="50" cy="50" r="${MARK.bindu}" fill="${color}"/>
 </svg>
 `;
 }
@@ -205,19 +235,16 @@ function svg(name, color) {
 svg('favicon.svg', LIGHT);
 svg('favicon-dark.svg', DARK);
 
-png('icon-192.png', 192, { scale: SCALE_ANY, color: LIGHT, background: WHITE });
-png('icon-512.png', 512, { scale: SCALE_ANY, color: LIGHT, background: WHITE });
+// Installed home-screen icons: white mark on the deep-turmeric gradient tile,
+// so the app is bold and unmistakable on any wallpaper.
+const TILE = { gradient: { top: TILE_TOP, bottom: TILE_BOTTOM } };
+const TILE_OPTS = { color: WHITE, ...TILE };
 
-png('icon-maskable-192.png', 192, {
-  scale: SCALE_MASKABLE,
-  color: LIGHT,
-  background: WHITE,
-});
-png('icon-maskable-512.png', 512, {
-  scale: SCALE_MASKABLE,
-  color: LIGHT,
-  background: WHITE,
-});
+png('icon-192.png', 192, { scale: SCALE_ANY, ...TILE_OPTS });
+png('icon-512.png', 512, { scale: SCALE_ANY, ...TILE_OPTS });
+
+png('icon-maskable-192.png', 192, { scale: SCALE_MASKABLE, ...TILE_OPTS });
+png('icon-maskable-512.png', 512, { scale: SCALE_MASKABLE, ...TILE_OPTS });
 
 // Android 13+ themed icons: flat silhouette, tinted by the system.
 png('icon-mono-512.png', 512, {
@@ -227,10 +254,6 @@ png('icon-mono-512.png', 512, {
 });
 
 // iOS applies its own squircle mask, so keep the mark off the corners.
-png('apple-touch-icon.png', 180, {
-  scale: SCALE_MASKABLE,
-  color: LIGHT,
-  background: WHITE,
-});
+png('apple-touch-icon.png', 180, { scale: SCALE_MASKABLE, ...TILE_OPTS });
 
 for (const name of written) console.log(`  public/${name}`);
