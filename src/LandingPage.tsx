@@ -467,11 +467,58 @@ function HeroPreview() {
         <FabGlyph />
       </span>
       <div className="lp-preview-tabs" data-active="inbox">
-        <span className="lp-preview-tab is-active">Inbox</span>
-        <span className="lp-preview-tab">Today</span>
-        <span className="lp-preview-tab">Notes</span>
+        <span className="lp-preview-tab is-active">
+          <InboxIcon />
+          Inbox
+        </span>
+        <span className="lp-preview-tab">
+          <TodayIcon />
+          Today
+        </span>
+        <span className="lp-preview-tab">
+          <NotesIcon />
+          Notes
+        </span>
       </div>
     </figure>
+  )
+}
+
+/** The tab icons from the app tabbar (App.tsx), mirrored at preview size. */
+function InboxIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </svg>
+  )
+}
+
+function TodayIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  )
+}
+
+function NotesIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </svg>
   )
 }
 
@@ -528,9 +575,18 @@ function DemoPhone({
         </span>
       ) : null}
       <div className="lp-preview-tabs" data-active={tab} aria-hidden="true">
-        <span className={tab === 'inbox' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>Inbox</span>
-        <span className={tab === 'today' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>Today</span>
-        <span className="lp-preview-tab">Notes</span>
+        <span className={tab === 'inbox' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
+          <InboxIcon />
+          Inbox
+        </span>
+        <span className={tab === 'today' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
+          <TodayIcon />
+          Today
+        </span>
+        <span className="lp-preview-tab">
+          <NotesIcon />
+          Notes
+        </span>
       </div>
     </div>
   )

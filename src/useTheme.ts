@@ -18,7 +18,7 @@ export function useTheme() {
     // JS is in charge we drop the media gating and pin every meta to the
     // chosen theme. Leaving the media attributes in place means the
     // dark-scheme meta keeps winning regardless of what the user picked.
-    const content = theme === 'dark' ? '#0d1117' : '#ffffff';
+    const content = theme === 'dark' ? '#171310' : '#f7f3ec';
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
       meta.removeAttribute('media');
       meta.setAttribute('content', content);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDaysLocal, todayLocal } from './dates.ts'
+import { addDaysLocal, formatLongDate, todayLocal } from './dates.ts'
 
 describe('todayLocal', () => {
   it('returns YYYY-MM-DD with zero padding', () => {
@@ -23,5 +23,15 @@ describe('addDaysLocal', () => {
 
   it('returns the same date for zero days', () => {
     expect(addDaysLocal('2026-09-25', 0)).toBe('2026-09-25')
+  })
+})
+
+describe('formatLongDate', () => {
+  it('formats a day key with weekday, month and day', () => {
+    expect(formatLongDate('2024-01-01')).toBe('Monday, January 1')
+  })
+
+  it('zero-pads single-digit days', () => {
+    expect(formatLongDate('2026-10-11')).toBe('Sunday, October 11')
   })
 })

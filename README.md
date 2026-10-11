@@ -58,10 +58,46 @@ does not vanish entirely.
 
 ### Not yet built
 
-M6c (progress ring + streak counter), M6d (row enter, sheet exit, tab direction)
-and M6e (deletion collapse, the most complex piece) are planned but unimplemented.
+M6d (row enter, sheet exit, tab direction) and M6e (deletion collapse, the
+most complex piece) are planned but unimplemented.
+
+## Today dashboard (M6c)
+
+The Today tab opens with a serif date header and a summary card: a progress
+ring ("N of M done today") plus a streak counter.
+
+The ring reads from `selectDailyProgress` (`src/selectors.ts`): the
+numerator is tasks completed today (`doneAt` on today's day key), the
+denominator adds the open tasks due today or overdue — the same
+`openTodayCount` definition the clear celebration and the reminder use, so
+the three can never disagree. At 100% the ring switches from the accent to
+the success colour.
+
+The streak is `currentStreak` (`src/streaks.ts`): consecutive local days
+with at least one completion, counting back from today — or from yesterday
+when today has none yet, so the streak stays alive until the day ends. Pure
+and unit-tested like the rest of the M6 logic.
+
+The ring itself is `src/components/ProgressRing.tsx`: two SVG circles, the
+fill sliding its `stroke-dashoffset`. Only paint properties animate, and the
+reduced-motion backstop in `styles.css` disables the transition.
 
 ---
+
+## Look & feel: calm & mindful (M8)
+
+Warm paper surfaces, deep ink text, saffron accent. The accent is the deep
+turmeric shade (`#b45309` light) rather than bright saffron because it
+doubles as the button background and must keep white text at 4.5:1.
+
+Display type is **Fraunces**, self-hosted at `public/fonts/fraunces-*.woff2`
+(latin subset, weights 500/600, `@font-face` at the top of `styles.css`), so
+the PWA keeps its display type offline — the Google Fonts `<link>` in
+`index.html` only carries Inter and is not cached by `sw.js`. Georgia is the
+fallback stack.
+
+The landing page's phone previews are hand-built lookalikes: when app styles
+change, re-sync the `.lp-preview-*` rules in `styles.css`.
 
 ## End-of-day reminder (M7)
 

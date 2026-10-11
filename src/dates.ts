@@ -21,3 +21,13 @@ export function addDaysLocal(dateString: string, days: number): string {
   date.setDate(date.getDate() + days)
   return formatLocal(date)
 }
+
+/** Human-readable form of a day key for display headers, e.g. "Monday, January 1". */
+export function formatLongDate(day: string, locale: string = 'en-US'): string {
+  const [year, month, date] = day.split('-').map(Number)
+  return new Date(year, month - 1, date).toLocaleDateString(locale, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+}

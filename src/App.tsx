@@ -9,22 +9,24 @@ import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
 import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
-import { todayLocal } from './dates.ts'
+import { todayLocal, formatLongDate } from './dates.ts'
 import { selectNotesNewestFirst } from './notes.ts'
 import {
   selectCompleted,
+  selectDailyProgress,
   selectDueToday,
   selectInbox,
   selectOverdue,
   selectUpcoming,
 } from './selectors.ts'
-import { countCompletedOn } from './streaks.ts'
+import { countCompletedOn, currentStreak } from './streaks.ts'
 import { popCheckbox, ringPulse, tapFeedback, unlockAudio } from './feedback.ts'
 import { useCelebration } from './useCelebration.ts'
 import { useNotes } from './useNotes.ts'
 import { useReminder } from './useReminder.ts'
 import { useTasks } from './useTasks.ts'
 import { useTheme } from './useTheme.ts'
+import ProgressRing from './components/ProgressRing.tsx'
 
 type Tab = 'inbox' | 'today' | 'notes'
 
@@ -50,6 +52,8 @@ function App() {
   const overdueTasks = selectOverdue(tasks, today)
   const dueTodayTasks = selectDueToday(tasks, today)
   const upcomingTasks = selectUpcoming(tasks, today)
+  const todayProgress = selectDailyProgress(tasks, today)
+  const streak = currentStreak(tasks, today)
   const editingTask = tasks.find((task) => task.id === editingId) ?? null
   const sortedNotes = selectNotesNewestFirst(notes)
   const editingNote = notes.find((note) => note.id === editingNoteId) ?? null
@@ -166,8 +170,29 @@ function App() {
           </section>
         ) : tab === 'today' ? (
           <section aria-label="Today">
-            <h2>Today</h2>
-            {todayEmpty ? (
+            <h2 className="today-title">{formatLongDate(today)}</h2>
+            {todayProgress.denominator > 0 ? (
+              <div className="today-summary">
+                <ProgressRing
+                  progress={todayProgress.numerator / todayProgress.denominator}
+                  label={`${todayProgress.numerator}/${todayProgress.denominator}`}
+                />
+                <div className="today-summary-text">
+                  <p className="today-summary-count">
+                    {todayProgress.numerator} of {todayProgress.denominator} done today
+                  </p>
+                  {streak > 0 ? (
+                    <p className="today-summary-streak">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                      </svg>
+                      {streak}-day streak
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            {todayEmpty && todayProgress.denominator === 0 ? (
               <div className="empty-state">
                 <svg className="empty-state-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="6" y="8" width="36" height="32" rx="4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -321,6 +346,10 @@ function App() {
           aria-current={tab === 'inbox' ? 'page' : undefined}
           onClick={() => setTab('inbox')}
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
           Inbox
         </button>
         <button
@@ -329,6 +358,17 @@ function App() {
           aria-current={tab === 'today' ? 'page' : undefined}
           onClick={() => setTab('today')}
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="m4.93 4.93 1.41 1.41"/>
+            <path d="m17.66 17.66 1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="m6.34 17.66-1.41 1.41"/>
+            <path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
           Today
         </button>
         <button
@@ -337,6 +377,13 @@ function App() {
           aria-current={tab === 'notes' ? 'page' : undefined}
           onClick={() => setTab('notes')}
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+            <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+            <path d="M10 9H8"/>
+            <path d="M16 13H8"/>
+            <path d="M16 17H8"/>
+          </svg>
           Notes
         </button>
       </nav>

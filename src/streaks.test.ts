@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countCompletedOn } from './streaks.ts'
+import { countCompletedOn, currentStreak } from './streaks.ts'
 import type { Task } from './types.ts'
 
 function makeTask(id: string, overrides: Partial<Task> = {}): Task {
@@ -74,5 +74,65 @@ describe('countCompletedOn', () => {
   it('uses local time rather than UTC for a late-evening completion', () => {
     const lateEvening = new Date(2026, 9, 9, 23, 30, 0, 0).getTime()
     expect(countCompletedOn([makeTask('a', { doneAt: lateEvening })], '2026-10-09')).toBe(1)
+  })
+})
+
+describe('currentStreak', () => {
+  it('is zero with no completions', () => {
+    expect(currentStreak([], '2026-10-09')).toBe(0)
+  })
+
+  it('is one when only today is complete', () => {
+    const tasks = [makeTask('a', { doneAt: localNoon(2026, 10, 9) })]
+    expect(currentStreak(tasks, '2026-10-09')).toBe(1)
+    expect(currentStreak(tasks, '2026-10-10')).toBe(1)
+  })
+
+  it('counts consecutive days back from today', () => {
+    const tasks = [
+      makeTask('a', { doneAt: localNoon(2026, 10, 7) }),
+      makeTask('b', { doneAt: localNoon(2026, 10, 8) }),
+      makeTask('c', { doneAt: localNoon(2026, 10, 9) }),
+    ]
+    expect(currentStreak(tasks, '2026-10-09')).toBe(3)
+  })
+
+  it('stays alive through yesterday when today is not done yet', () => {
+    const tasks = [
+      makeTask('a', { doneAt: localNoon(2026, 10, 7) }),
+      makeTask('b', { doneAt: localNoon(2026, 10, 8) }),
+    ]
+    expect(currentStreak(tasks, '2026-10-09')).toBe(2)
+  })
+
+  it('breaks at the first day without a completion', () => {
+    const tasks = [
+      makeTask('a', { doneAt: localNoon(2026, 10, 5) }),
+      makeTask('b', { doneAt: localNoon(2026, 10, 6) }),
+      makeTask('c', { doneAt: localNoon(2026, 10, 8) }),
+    ]
+    expect(currentStreak(tasks, '2026-10-08')).toBe(1)
+    expect(currentStreak(tasks, '2026-10-09')).toBe(1)
+  })
+
+  it('ignores completions with doneAt null', () => {
+    const tasks = [
+      makeTask('legacy', { done: true, doneAt: null }),
+      makeTask('a', { doneAt: localNoon(2026, 10, 9) }),
+    ]
+    expect(currentStreak(tasks, '2026-10-09')).toBe(1)
+  })
+
+  it('spans a month boundary', () => {
+    const tasks = [
+      makeTask('a', { doneAt: localNoon(2026, 9, 30) }),
+      makeTask('b', { doneAt: localNoon(2026, 10, 1) }),
+    ]
+    expect(currentStreak(tasks, '2026-10-01')).toBe(2)
+  })
+
+  it('does not count open tasks carrying a doneAt', () => {
+    const tasks = [makeTask('a', { done: false, doneAt: localNoon(2026, 10, 9) })]
+    expect(currentStreak(tasks, '2026-10-09')).toBe(0)
   })
 })
