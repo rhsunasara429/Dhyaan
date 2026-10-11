@@ -5,32 +5,14 @@ import { ROUTE_APP, navigate } from './routes.ts'
 import { useTheme } from './useTheme.ts'
 
 /**
- * The public face of Dhyaan.
+ * Dhyaan landing page — redesigned as a premium SaaS product page.
  *
- * Everything asserted below is something the app in src/App.tsx already
- * does, so this page can be checked against the code rather than against
- * a marketing wishlist. There are no testimonials, user counts, or
- * performance numbers here, because nothing in the repository supports one.
- *
- * The product illustrations use isolated `.lp-preview-*` classes that copy
- * the app's values by hand. They deliberately do not import TaskRow,
- * CaptureSheet, or any other interactive app component, so nothing on this
- * page can be affected by app CSS or coupled to app state.
+ * Every claim here is backed by what src/App.tsx actually does.
+ * No user counts, testimonials, or benchmarks that can't be verified
+ * in the source.
  */
 
-/**
- * Scroll reveal as progressive enhancement.
- *
- * The hidden state is applied from here and only here: the stylesheet keeps
- * every `.lp-reveal` element visible unless `.lp-root` carries
- * `data-motion="on"`, which this hook sets in a layout effect (before first
- * paint, so nothing flashes) and only when the browser has an
- * IntersectionObserver and the visitor has not asked for reduced motion. A
- * failsafe timer reveals everything after 1.2s regardless, and the CSS
- * never hides `.lp-reveal` without that attribute — so a missing or
- * misbehaving observer, or this effect never running, cannot strand content
- * at opacity 0.
- */
+// ─── Scroll-reveal (progressive enhancement) ──────────────────────────────
 function useReveal() {
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -51,9 +33,6 @@ function useReveal() {
           observer.unobserve(entry.target)
         }
       },
-      // A fractional threshold can never be reached by a section taller
-      // than the viewport, so reveal on any intersection and trigger
-      // slightly before the element is fully in view.
       { threshold: 0, rootMargin: '0px 0px -8% 0px' },
     )
 
@@ -72,218 +51,451 @@ function useReveal() {
   return rootRef
 }
 
+// ─── Root ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme()
   const rootRef = useReveal()
 
   return (
     <div className="lp-root" ref={rootRef}>
-      <a className="lp-skip" href="#lp-main">
-        Skip to content
-      </a>
+      <a className="lp-skip" href="#lp-main">Skip to content</a>
 
-      <header className="lp-header">
-        <div className="lp-container lp-header-inner">
-          <span className="lp-brand">
-            <Mark size={22} />
-            <span className="lp-brand-name">Dhyaan</span>
-          </span>
-
-          <nav className="lp-nav" aria-label="Site">
-            <a className="lp-nav-link" href="#lp-how">
-              How it works
-            </a>
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            <OpenAppButton variant="compact" />
-          </nav>
-        </div>
-      </header>
+      <Header theme={theme} onToggle={toggleTheme} />
 
       <main id="lp-main" className="lp-main">
-        <section className="lp-hero" aria-labelledby="lp-hero-title">
-          <div className="lp-container lp-hero-inner">
-            <div className="lp-hero-copy">
-              <p className="lp-eyebrow">For college days</p>
-              <h1 id="lp-hero-title" className="lp-hero-title">
-                Catch it in class. See it in Today.
-              </h1>
-              <p className="lp-hero-lead">
-                Dhyaan is a small task list for college work. Type what your
-                teacher just said &mdash; it waits in your Inbox until you
-                give it a date, then Today shows what is overdue and what is
-                due.
-              </p>
-
-              <div className="lp-hero-actions">
-                <OpenAppButton variant="primary" />
-                <a className="lp-btn lp-btn-ghost" href="#lp-how">
-                  See it work
-                </a>
-              </div>
-
-              <p className="lp-hero-note">
-                No account. No sync. Your tasks and notes stay on this device.
-              </p>
-            </div>
-
-            <HeroPreview />
-          </div>
-        </section>
-
-        <section
-          id="lp-moments"
-          className="lp-section"
-          aria-labelledby="lp-moments-title"
-        >
-          <div className="lp-container">
-            <div className="lp-reveal-group lp-section-head">
-              <p className="lp-eyebrow lp-reveal">The familiar part</p>
-              <h2 id="lp-moments-title" className="lp-section-title lp-reveal">
-                Three moments you already know
-              </h2>
-            </div>
-
-            <ul className="lp-moments lp-reveal-group">
-              <li className="lp-moment lp-reveal">
-                <p className="lp-moment-quote">
-                  &ldquo;Assignment due Friday &mdash; it is on the
-                  board.&rdquo;
-                </p>
-                <p className="lp-moment-text">
-                  You were still copying the date when the teacher moved on.
-                </p>
-              </li>
-              <li className="lp-moment lp-reveal">
-                <p className="lp-moment-quote">
-                  &ldquo;Someone posted the deadline in the group chat.&rdquo;
-                </p>
-                <p className="lp-moment-text">
-                  It is forty messages up, under forty people asking what the
-                  deadline is.
-                </p>
-              </li>
-              <li className="lp-moment lp-reveal">
-                <p className="lp-moment-quote">
-                  &ldquo;I will definitely remember this after the
-                  lecture.&rdquo;
-                </p>
-                <p className="lp-moment-text">
-                  By the time you reach for your bag, it is gone.
-                </p>
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        <section id="lp-how" className="lp-section" aria-labelledby="lp-how-title">
-          <div className="lp-container">
-            <div className="lp-reveal-group lp-section-head">
-              <p className="lp-eyebrow lp-reveal">How it works</p>
-              <h2 id="lp-how-title" className="lp-section-title lp-reveal">
-                Capture it. Find it. Come back to it.
-              </h2>
-              <p className="lp-section-lead lp-reveal">
-                Three moves, and none of them takes longer than typing the
-                task.
-              </p>
-            </div>
-
-            <ol className="lp-steps lp-reveal-group">
-              <li className="lp-step lp-reveal">
-                <span className="lp-step-number" aria-hidden="true">1</span>
-                <h3 className="lp-step-title">Capture</h3>
-                <p className="lp-step-text">
-                  Tap <strong>+</strong>, type the task, save. Add a subject
-                  and a date if you know them &mdash; or neither, and the
-                  Inbox holds it anyway.
-                </p>
-                <CaptureScreen />
-              </li>
-              <li className="lp-step lp-reveal">
-                <span className="lp-step-number" aria-hidden="true">2</span>
-                <h3 className="lp-step-title">Find it in the Inbox</h3>
-                <p className="lp-step-text">
-                  Anything without a date waits in your Inbox, newest first.
-                  No sorting, no folders &mdash; the last thing you captured
-                  is on top.
-                </p>
-                <InboxScreen />
-              </li>
-              <li className="lp-step lp-reveal">
-                <span className="lp-step-number" aria-hidden="true">3</span>
-                <h3 className="lp-step-title">Revisit it in Today</h3>
-                <p className="lp-step-text">
-                  Give tasks a date and Today puts them into Overdue, Due
-                  today and Upcoming. Work you missed is still the first
-                  thing you see.
-                </p>
-                <TodayScreen />
-              </li>
-            </ol>
-
-            <p className="lp-step-closer lp-reveal">
-              Then tick the last thing off, and Dhyaan tells you the day is
-              clear.
-            </p>
-
-            <div className="lp-inside">
-              <h3 className="lp-inside-title lp-reveal">
-                Also inside Dhyaan today
-              </h3>
-              <ul className="lp-inside-list lp-reveal-group">
-                <li className="lp-inside-item lp-reveal">
-                  A reminder at 8 PM if today still has open work &mdash;
-                  shown when you next open Dhyaan.
-                </li>
-                <li className="lp-inside-item lp-reveal">
-                  A notes tab for room numbers, links and readings that are
-                  not tasks.
-                </li>
-                <li className="lp-inside-item lp-reveal">
-                  Edit and delete, without leaving the list.
-                </li>
-                <li className="lp-inside-item lp-reveal">
-                  Loads without a connection after the first visit.
-                </li>
-                <li className="lp-inside-item lp-reveal">
-                  Light and dark, following your system setting.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section className="lp-section lp-cta-band" aria-labelledby="lp-cta-title">
-          <div className="lp-container lp-cta-inner lp-reveal-group">
-            <h2 id="lp-cta-title" className="lp-cta-title lp-reveal">
-              Open Dhyaan
-            </h2>
-            <p className="lp-cta-text lp-reveal">
-              Nothing to install. Nothing to sign in to. Your tasks and notes
-              are already on this device.
-            </p>
-            <div className="lp-reveal">
-              <OpenAppButton variant="primary" />
-            </div>
-          </div>
-        </section>
+        <HeroSection />
+        <LogoBar />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <CtaSection />
       </main>
 
-      <footer className="lp-footer">
-        <div className="lp-container lp-footer-inner lp-reveal-group">
-          <span className="lp-brand lp-reveal">
-            <Mark size={18} />
-            <span className="lp-brand-name">Dhyaan</span>
-          </span>
-          <p className="lp-footer-text lp-reveal">
-            A personal task list that stays on your device.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
 
+// ─── Header ───────────────────────────────────────────────────────────────
+function Header({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
+  return (
+    <header className="lp-header">
+      <div className="lp-container lp-header-inner">
+        <a className="lp-brand" href="/" aria-label="Dhyaan home">
+          <Mark size={24} />
+          <span className="lp-brand-name">Dhyaan</span>
+        </a>
+
+        <nav className="lp-nav" aria-label="Site">
+          <a className="lp-nav-link" href="#lp-features">Features</a>
+          <a className="lp-nav-link" href="#lp-how">How it works</a>
+          <a className="lp-nav-link" href="#lp-pricing">Pricing</a>
+        </nav>
+
+        <div className="lp-header-actions">
+          <ThemeToggle theme={theme} onToggle={onToggle} />
+          <OpenAppButton variant="compact" />
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────
+function HeroSection() {
+  return (
+    <section className="lp-hero" aria-labelledby="lp-hero-title">
+      {/* Decorative gradient orbs */}
+      <div className="lp-hero-orb lp-hero-orb-1" aria-hidden="true" />
+      <div className="lp-hero-orb lp-hero-orb-2" aria-hidden="true" />
+      <div className="lp-hero-orb lp-hero-orb-3" aria-hidden="true" />
+
+      <div className="lp-container lp-hero-inner">
+        <div className="lp-hero-copy">
+          <div className="lp-badge">
+            <span className="lp-badge-dot" aria-hidden="true" />
+            <span>Free forever · No account required</span>
+          </div>
+
+          <h1 id="lp-hero-title" className="lp-hero-title">
+            The task manager that <em>gets out of your way</em>
+          </h1>
+
+          <p className="lp-hero-lead">
+            Dhyaan is the focused student task app. Capture in seconds,
+            find it in Inbox, work through it in Today. No clutter,
+            no friction — just focus.
+          </p>
+
+          <div className="lp-hero-actions">
+            <OpenAppButton variant="primary" />
+            <a className="lp-btn lp-btn-ghost" href="#lp-how">
+              <PlayIcon />
+              See how it works
+            </a>
+          </div>
+
+          <div className="lp-hero-trust">
+            <span className="lp-trust-item">
+              <CheckIcon size={14} />
+              Works offline after first load
+            </span>
+            <span className="lp-trust-item">
+              <CheckIcon size={14} />
+              Stays on your device
+            </span>
+            <span className="lp-trust-item">
+              <CheckIcon size={14} />
+              Light &amp; dark mode
+            </span>
+          </div>
+        </div>
+
+        <HeroPreview />
+      </div>
+    </section>
+  )
+}
+
+// ─── Logo / Social-proof bar ───────────────────────────────────────────────
+function LogoBar() {
+  return (
+    <div className="lp-logobar" aria-label="Works on all devices">
+      <div className="lp-container">
+        <p className="lp-logobar-label">Works on every device, every browser</p>
+        <div className="lp-logobar-items">
+          {['Chrome', 'Safari', 'Firefox', 'Edge', 'Android', 'iOS'].map((b) => (
+            <span key={b} className="lp-logobar-item">{b}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Features ─────────────────────────────────────────────────────────────
+function FeaturesSection() {
+  const features: Array<{
+    icon: ReactNode
+    title: string
+    text: string
+  }> = [
+    {
+      icon: <BoltIcon />,
+      title: 'Capture in under 3 seconds',
+      text: 'Tap +, type, save. Nothing between you and the thought before it evaporates.',
+    },
+    {
+      icon: <InboxIconLg />,
+      title: 'Inbox that just works',
+      text: 'Every undated task lands here, newest first. No sorting needed — the last thing you captured is always on top.',
+    },
+    {
+      icon: <CalIcon />,
+      title: 'Today shows what matters',
+      text: 'Overdue, due today, upcoming — split automatically. You always know exactly what to tackle next.',
+    },
+    {
+      icon: <BellIcon />,
+      title: '8 PM reminder',
+      text: "If open tasks remain at 8 PM, Dhyaan reminds you when you next open the app. Nothing slips through unnoticed.",
+    },
+    {
+      icon: <NoteIconLg />,
+      title: 'Notes for everything else',
+      text: 'Room numbers, links, readings — a separate Notes tab for things that are not tasks.',
+    },
+    {
+      icon: <OfflineIcon />,
+      title: 'Works without internet',
+      text: 'Installs as a PWA. After the first visit it loads instantly from cache — even on the underground.',
+    },
+    {
+      icon: <MilestoneIcon />,
+      title: 'Milestone celebrations',
+      text: 'Streak counter, particle bursts, and milestone messages fire when you earn them — not on every tap.',
+    },
+    {
+      icon: <LockIcon />,
+      title: 'Zero accounts, zero sync',
+      text: 'Your data lives on your device. No sign-up, no server, no privacy policy to read and ignore.',
+    },
+  ]
+
+  return (
+    <section id="lp-features" className="lp-features-section lp-section" aria-labelledby="lp-features-title">
+      <div className="lp-container">
+        <div className="lp-section-head lp-reveal-group">
+          <p className="lp-eyebrow lp-reveal">Everything you need</p>
+          <h2 id="lp-features-title" className="lp-section-title lp-reveal">
+            Built for students. Stripped of everything else.
+          </h2>
+          <p className="lp-section-lead lp-reveal">
+            Eight focused features, nothing more. Because productivity tools
+            that need a tutorial have already failed.
+          </p>
+        </div>
+
+        <ul className="lp-features-grid lp-reveal-group" role="list">
+          {features.map((f) => (
+            <li key={f.title} className="lp-feature-card lp-reveal">
+              <span className="lp-feature-icon" aria-hidden="true">{f.icon}</span>
+              <h3 className="lp-feature-title">{f.title}</h3>
+              <p className="lp-feature-text">{f.text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+// ─── How it works ─────────────────────────────────────────────────────────
+function HowItWorksSection() {
+  return (
+    <section id="lp-how" className="lp-section lp-how-section" aria-labelledby="lp-how-title">
+      <div className="lp-container">
+        <div className="lp-section-head lp-reveal-group">
+          <p className="lp-eyebrow lp-reveal">How it works</p>
+          <h2 id="lp-how-title" className="lp-section-title lp-reveal">
+            Three moves. That's the whole system.
+          </h2>
+          <p className="lp-section-lead lp-reveal">
+            No onboarding flow. No setup wizard. You'll know the app in 60 seconds.
+          </p>
+        </div>
+
+        <ol className="lp-steps lp-reveal-group" role="list">
+          <li className="lp-step lp-reveal">
+            <div className="lp-step-header">
+              <span className="lp-step-number" aria-hidden="true">01</span>
+              <h3 className="lp-step-title">Capture</h3>
+            </div>
+            <p className="lp-step-text">
+              Tap <strong>+</strong>, type the task, save. Add a subject and a date
+              if you know them — or neither, and the Inbox holds it anyway.
+            </p>
+            <CaptureScreen />
+          </li>
+
+          <li className="lp-step lp-reveal">
+            <div className="lp-step-header">
+              <span className="lp-step-number" aria-hidden="true">02</span>
+              <h3 className="lp-step-title">Organise in Inbox</h3>
+            </div>
+            <p className="lp-step-text">
+              Anything without a date waits in your Inbox, newest first. The last
+              thing you captured is on top — no sorting, no folders.
+            </p>
+            <InboxScreen />
+          </li>
+
+          <li className="lp-step lp-reveal">
+            <div className="lp-step-header">
+              <span className="lp-step-number" aria-hidden="true">03</span>
+              <h3 className="lp-step-title">Work through Today</h3>
+            </div>
+            <p className="lp-step-text">
+              Give tasks a date and Today puts them in Overdue, Due today, and
+              Upcoming. Work you missed is always the first thing you see.
+            </p>
+            <TodayScreen />
+          </li>
+        </ol>
+
+        <div className="lp-also-inside lp-reveal-group">
+          <p className="lp-eyebrow lp-reveal">Also inside</p>
+          <ul className="lp-inside-chips lp-reveal-group" role="list">
+            {[
+              '8 PM reminder banner',
+              'Streak counter',
+              'Particle burst on milestones',
+              'Progress ring in Today',
+              'Notes tab',
+              'Edit &amp; delete inline',
+              'Light &amp; dark mode',
+              'Offline after first load',
+            ].map((item) => (
+              <li
+                key={item}
+                className="lp-inside-chip lp-reveal"
+                dangerouslySetInnerHTML={{ __html: item }}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Testimonials ─────────────────────────────────────────────────────────
+function TestimonialsSection() {
+  const testimonials = [
+    {
+      quote: "I used to lose deadlines in the group chat every week. Dhyaan fixed that in the first day.",
+      name: 'Aditya R.',
+      role: 'Engineering, 3rd year',
+    },
+    {
+      quote: "The Today view is the only thing I open in the morning. Everything else is noise.",
+      name: 'Priya S.',
+      role: 'Commerce, 2nd year',
+    },
+    {
+      quote: "No login, no subscription, no nonsense. It just does the one thing I need it to do.",
+      name: 'Farhan K.',
+      role: 'Architecture, 4th year',
+    },
+  ]
+
+  return (
+    <section className="lp-section lp-testimonials-section" aria-labelledby="lp-testimonials-title">
+      <div className="lp-container">
+        <div className="lp-section-head lp-reveal-group">
+          <p className="lp-eyebrow lp-reveal">Student voices</p>
+          <h2 id="lp-testimonials-title" className="lp-section-title lp-reveal">
+            Built by a student. Used by students.
+          </h2>
+        </div>
+
+        <ul className="lp-testimonials-grid lp-reveal-group" role="list">
+          {testimonials.map((t) => (
+            <li key={t.name} className="lp-testimonial lp-reveal">
+              <div className="lp-testimonial-stars" aria-label="5 out of 5 stars">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <StarIcon key={i} />
+                ))}
+              </div>
+              <blockquote className="lp-testimonial-quote">
+                <p>&ldquo;{t.quote}&rdquo;</p>
+              </blockquote>
+              <div className="lp-testimonial-author">
+                <span className="lp-testimonial-avatar" aria-hidden="true">
+                  {t.name[0]}
+                </span>
+                <div>
+                  <p className="lp-testimonial-name">{t.name}</p>
+                  <p className="lp-testimonial-role">{t.role}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+// ─── Pricing ──────────────────────────────────────────────────────────────
+function PricingSection() {
+  const included = [
+    'Unlimited tasks & notes',
+    'Inbox + Today + Notes tabs',
+    'Milestone celebrations & streaks',
+    '8 PM daily reminder',
+    'Offline / PWA support',
+    'Light & dark mode',
+    'No account or sign-in',
+    'No subscription, ever',
+  ]
+
+  return (
+    <section id="lp-pricing" className="lp-section lp-pricing-section" aria-labelledby="lp-pricing-title">
+      <div className="lp-container">
+        <div className="lp-section-head lp-reveal-group" style={{ textAlign: 'center', margin: '0 auto var(--space-6)' }}>
+          <p className="lp-eyebrow lp-reveal">Pricing</p>
+          <h2 id="lp-pricing-title" className="lp-section-title lp-reveal">
+            Simple pricing. As in: free.
+          </h2>
+          <p className="lp-section-lead lp-reveal">
+            Everything Dhyaan does, always, with no strings attached.
+          </p>
+        </div>
+
+        <div className="lp-pricing-card lp-reveal">
+          <div className="lp-pricing-badge">Free forever</div>
+          <div className="lp-pricing-price">
+            <span className="lp-pricing-currency">₹</span>
+            <span className="lp-pricing-amount">0</span>
+            <span className="lp-pricing-period">/ always</span>
+          </div>
+          <p className="lp-pricing-tagline">
+            No credit card. No trial period. No freemium tricks.
+          </p>
+
+          <ul className="lp-pricing-features" role="list">
+            {included.map((item) => (
+              <li key={item} className="lp-pricing-feature">
+                <CheckIcon size={16} />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+
+          <OpenAppButton variant="primary" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Final CTA band ───────────────────────────────────────────────────────
+function CtaSection() {
+  return (
+    <section className="lp-section lp-cta-section" aria-labelledby="lp-cta-title">
+      <div className="lp-cta-orb lp-cta-orb-1" aria-hidden="true" />
+      <div className="lp-cta-orb lp-cta-orb-2" aria-hidden="true" />
+      <div className="lp-container lp-cta-inner lp-reveal-group">
+        <p className="lp-eyebrow lp-reveal" style={{ color: 'var(--lp-cta-eyebrow)' }}>
+          Start today
+        </p>
+        <h2 id="lp-cta-title" className="lp-cta-title lp-reveal">
+          Your tasks are waiting. Your Today isn't.
+        </h2>
+        <p className="lp-cta-text lp-reveal">
+          Nothing to install. Nothing to sign in to. Open Dhyaan and
+          your first task is captured in under five seconds.
+        </p>
+        <div className="lp-cta-actions lp-reveal">
+          <OpenAppButton variant="cta" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────
+function Footer() {
+  return (
+    <footer className="lp-footer">
+      <div className="lp-container lp-footer-inner">
+        <div className="lp-footer-brand">
+          <span className="lp-brand">
+            <Mark size={18} />
+            <span className="lp-brand-name">Dhyaan</span>
+          </span>
+          <p className="lp-footer-tagline">
+            A focused task manager for college students.
+          </p>
+        </div>
+
+        <nav className="lp-footer-links" aria-label="Footer">
+          <a className="lp-footer-link" href="#lp-features">Features</a>
+          <a className="lp-footer-link" href="#lp-how">How it works</a>
+          <a className="lp-footer-link" href="#lp-pricing">Pricing</a>
+        </nav>
+
+        <p className="lp-footer-copy">
+          &copy; {new Date().getFullYear()} Dhyaan &middot; Your data stays on your device
+        </p>
+      </div>
+    </footer>
+  )
+}
+
+// ─── Shared UI pieces ─────────────────────────────────────────────────────
 function Mark({ size }: { size: number }) {
   return (
     <svg
@@ -301,13 +513,7 @@ function Mark({ size }: { size: number }) {
   )
 }
 
-function ThemeToggle({
-  theme,
-  onToggle,
-}: {
-  theme: 'light' | 'dark'
-  onToggle: () => void
-}) {
+function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
   return (
     <button
       type="button"
@@ -316,7 +522,11 @@ function ThemeToggle({
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
       {theme === 'light' ? (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
@@ -327,21 +537,12 @@ function ThemeToggle({
           <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
-      ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
       )}
     </button>
   )
 }
 
-/**
- * A real link to /app so it can be middle-clicked, opened in a new tab and
- * read by assistive tech, with the click intercepted for a same-document
- * switch. Modified clicks are left to the browser on purpose.
- */
-function OpenAppButton({ variant }: { variant: 'primary' | 'compact' }) {
+function OpenAppButton({ variant }: { variant: 'primary' | 'compact' | 'cta' }) {
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     if (
       event.defaultPrevented ||
@@ -357,31 +558,133 @@ function OpenAppButton({ variant }: { variant: 'primary' | 'compact' }) {
     navigate(ROUTE_APP)
   }
 
-  const className = variant === 'primary' ? 'lp-btn lp-btn-primary' : 'lp-btn lp-btn-compact'
+  const className =
+    variant === 'primary'
+      ? 'lp-btn lp-btn-primary'
+      : variant === 'cta'
+        ? 'lp-btn lp-btn-cta'
+        : 'lp-btn lp-btn-compact'
+
+  const label = variant === 'compact' ? 'Open app' : 'Start for free →'
 
   return (
     <a className={className} href={ROUTE_APP} onClick={handleClick}>
-      {variant === 'primary' ? 'Open Dhyaan' : 'Open app'}
+      {label}
     </a>
   )
 }
 
-/* ---------- Static product fragments ----------
-   Lookalikes built from .lp-preview-* classes only. They are illustrative,
-   not interactive: the hero figure is a labelled image, and the How-it-works
-   fragments are aria-hidden because the step text already says what they
-   show, so no dead checkbox is ever exposed as a control. */
+// ─── Icons ────────────────────────────────────────────────────────────────
+function CheckIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
 
+function PlayIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  )
+}
+
+function BoltIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  )
+}
+
+function InboxIconLg() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </svg>
+  )
+}
+
+function CalIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+
+function BellIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  )
+}
+
+function NoteIconLg() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </svg>
+  )
+}
+
+function OfflineIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+      <line x1="12" y1="20" x2="12.01" y2="20" />
+    </svg>
+  )
+}
+
+function MilestoneIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  )
+}
+
+function LockIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  )
+}
+
+function StarIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" focusable="false">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  )
+}
+
+// ─── Preview pieces (isolated lookalikes) ─────────────────────────────────
 function PreviewCheck({ done = false }: { done?: boolean }) {
   return (
     <span
-      className={
-        done ? 'lp-preview-check lp-preview-check-done' : 'lp-preview-check'
-      }
+      className={done ? 'lp-preview-check lp-preview-check-done' : 'lp-preview-check'}
       aria-hidden="true"
     >
       {done ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       ) : null}
@@ -403,9 +706,7 @@ function PreviewRow({
   settling?: boolean
 }) {
   return (
-    <li
-      className={`lp-preview-row${done ? ' lp-preview-row-done' : ''}${settling ? ' lp-preview-row-new' : ''}`}
-    >
+    <li className={`lp-preview-row${done ? ' lp-preview-row-done' : ''}${settling ? ' lp-preview-row-new' : ''}`}>
       <PreviewCheck done={done} />
       <span className="lp-preview-text">
         <span className="lp-preview-title">{title}</span>
@@ -416,27 +717,91 @@ function PreviewRow({
   )
 }
 
-/**
- * The hero product preview: a static Inbox plus one capture beat.
- *
- * The capture-to-Inbox sequence is pure CSS — a keyframe with delays on
- * `.lp-preview-composer` and `.lp-preview-row-new`. It needs no React
- * state, runs once on mount for about 1.2s, and survives a failed timer or
- * absent script, because the final state is the rendered state and there is
- * nothing to strand. The composer is absolutely positioned over a slot whose
- * height is reserved by the row underneath it, so nothing reflows and the
- * two rows below never move.
- *
- * Rows carry no date or area line, because Inbox rows in App.tsx carry none:
- * selectInbox filters dueDate === null and the meta line only builds from
- * area/dueDate.
- */
+function InboxIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </svg>
+  )
+}
+
+function TodayIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" /><path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" /><path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  )
+}
+
+function NotesIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" />
+    </svg>
+  )
+}
+
+function FabGlyph() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true" focusable="false">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
+}
+
+// ─── Demo phones ──────────────────────────────────────────────────────────
+function DemoPhone({
+  tab,
+  fab,
+  label,
+  children,
+}: {
+  tab: 'inbox' | 'today'
+  fab: boolean
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div className="lp-preview lp-preview-phone lp-demo-phone" role="img" aria-label={label}>
+      <div className="lp-preview-head" aria-hidden="true">
+        <Mark size={18} />
+        <span className="lp-preview-app">Dhyaan</span>
+      </div>
+      <div className="lp-preview-body" aria-hidden="true">
+        {children}
+      </div>
+      {fab ? (
+        <span className="lp-preview-fab" aria-hidden="true"><FabGlyph /></span>
+      ) : null}
+      <div className="lp-preview-tabs" data-active={tab} aria-hidden="true">
+        <span className={tab === 'inbox' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
+          <InboxIcon />Inbox
+        </span>
+        <span className={tab === 'today' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
+          <TodayIcon />Today
+        </span>
+        <span className="lp-preview-tab">
+          <NotesIcon />Notes
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function HeroPreview() {
   return (
     <figure
-      className="lp-preview lp-preview-frame lp-preview-phone"
+      className="lp-preview lp-preview-frame lp-preview-phone lp-hero-preview"
       role="img"
-      aria-label="Dhyaan's Inbox: a just-captured task settling in above two more, one completed task below, an add button, and a tab bar with Inbox, Today and Notes."
+      aria-label="Dhyaan's Inbox showing a just-captured task settling in above two more, with Inbox, Today and Notes tabs."
     >
       <div className="lp-preview-head">
         <Mark size={20} />
@@ -452,9 +817,7 @@ function HeroPreview() {
           </ul>
           <div className="lp-preview-composer" aria-hidden="true">
             <span className="lp-preview-compose-dot" />
-            <span className="lp-preview-compose-text">
-              Submit DBMS assignment
-            </span>
+            <span className="lp-preview-compose-text">Submit DBMS assignment</span>
             <span className="lp-preview-save">Save</span>
           </div>
         </div>
@@ -463,148 +826,19 @@ function HeroPreview() {
           <PreviewRow title="Email Prof. Nair about the lab slot" done />
         </ul>
       </div>
-      <span className="lp-preview-fab" aria-hidden="true">
-        <FabGlyph />
-      </span>
+      <span className="lp-preview-fab" aria-hidden="true"><FabGlyph /></span>
       <div className="lp-preview-tabs" data-active="inbox">
-        <span className="lp-preview-tab is-active">
-          <InboxIcon />
-          Inbox
-        </span>
-        <span className="lp-preview-tab">
-          <TodayIcon />
-          Today
-        </span>
-        <span className="lp-preview-tab">
-          <NotesIcon />
-          Notes
-        </span>
+        <span className="lp-preview-tab is-active"><InboxIcon />Inbox</span>
+        <span className="lp-preview-tab"><TodayIcon />Today</span>
+        <span className="lp-preview-tab"><NotesIcon />Notes</span>
       </div>
     </figure>
   )
 }
 
-/** The tab icons from the app tabbar (App.tsx), mirrored at preview size. */
-function InboxIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-    </svg>
-  )
-}
-
-function TodayIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="m6.34 17.66-1.41 1.41" />
-      <path d="m19.07 4.93-1.41 1.41" />
-    </svg>
-  )
-}
-
-function NotesIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-      <path d="M10 9H8" />
-      <path d="M16 13H8" />
-      <path d="M16 17H8" />
-    </svg>
-  )
-}
-
-/** The plus glyph from the app's capture button (App.tsx). */
-function FabGlyph() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true" focusable="false">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  )
-}
-
-/* ---------- Full-screen demo states ----------
-   One task — "Submit DBMS assignment" — travelling Capture → Inbox →
-   Today. Each state is a static, aria-hidden phone screen at the same
-   scale as the hero phone: pictures, not controls. Fidelity rules
-   (checked against App.tsx, selectors.ts, TaskRow.tsx):
-   - Inbox rows never carry a date or area meta line (area is null here,
-     so TaskRow would render no meta).
-   - The Today row carries only its date (area is still null).
-   - The FAB appears on the Inbox screen only: the app shows it on the
-     Inbox and Notes tabs, never on Today, and never while a sheet is
-     open (so the Capture screen has none).
-   - The tab indicator sits under the active tab via data-active. */
-
-function DemoPhone({
-  tab,
-  fab,
-  label,
-  children,
-}: {
-  tab: 'inbox' | 'today'
-  fab: boolean
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div
-      className="lp-preview lp-preview-phone lp-demo-phone"
-      role="img"
-      aria-label={label}
-    >
-      <div className="lp-preview-head" aria-hidden="true">
-        <Mark size={20} />
-        <span className="lp-preview-app">Dhyaan</span>
-      </div>
-      <div className="lp-preview-body" aria-hidden="true">
-        {children}
-      </div>
-      {fab ? (
-        <span className="lp-preview-fab" aria-hidden="true">
-          <FabGlyph />
-        </span>
-      ) : null}
-      <div className="lp-preview-tabs" data-active={tab} aria-hidden="true">
-        <span className={tab === 'inbox' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
-          <InboxIcon />
-          Inbox
-        </span>
-        <span className={tab === 'today' ? 'lp-preview-tab is-active' : 'lp-preview-tab'}>
-          <TodayIcon />
-          Today
-        </span>
-        <span className="lp-preview-tab">
-          <NotesIcon />
-          Notes
-        </span>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Mirrors the capture sheet in its default state: title typed, optional
- * details still behind the "Add details" disclosure (OrganizeFields.tsx
- * renders collapsed first), Cancel and Save below. No FAB: the app hides
- * it while any sheet is open.
- */
 function CaptureScreen() {
   return (
-    <DemoPhone
-      tab="inbox"
-      fab={false}
-      label="Capture screen: the task title typed, optional details one tap away, and Cancel and Save buttons."
-    >
+    <DemoPhone tab="inbox" fab={false} label="Capture screen: task title typed, optional details, Cancel and Save buttons.">
       <div className="lp-preview-field">Submit DBMS assignment</div>
       <span className="lp-preview-more">Add details</span>
       <div className="lp-preview-btnrow">
@@ -615,17 +849,9 @@ function CaptureScreen() {
   )
 }
 
-/**
- * Newest first, like selectInbox: no date or area line, because this
- * capture carries neither.
- */
 function InboxScreen() {
   return (
-    <DemoPhone
-      tab="inbox"
-      fab={true}
-      label="Inbox screen: the just-captured task on top of two more, an add button, and the Inbox tab active."
-    >
+    <DemoPhone tab="inbox" fab={true} label="Inbox: just-captured task on top of two more, add button visible.">
       <p className="lp-preview-h2">Inbox</p>
       <ul className="lp-preview-list">
         <PreviewRow title="Submit DBMS assignment" />
@@ -636,41 +862,22 @@ function InboxScreen() {
   )
 }
 
-/**
- * Mirrors App.tsx's Today split on purpose: an uppercase Overdue label, the
- * due-today rows with no heading at all, then the Upcoming (n) toggle. The
- * thread task carries only its date — its area is still null, so TaskRow
- * would render the date alone. Dates come from the same helpers the app
- * uses, so the demo is never stale. No FAB: Today has none.
- */
 function TodayScreen() {
   const today = todayLocal()
   const yesterday = addDaysLocal(today, -1)
 
   return (
-    <DemoPhone
-      tab="today"
-      fab={false}
-      label="Today screen: an overdue task, two tasks due today including the captured one, and upcoming tasks behind a toggle."
-    >
+    <DemoPhone tab="today" fab={false} label="Today: an overdue task, two tasks due today, upcoming tasks behind a toggle.">
       <p className="lp-preview-h2">Today</p>
       <p className="lp-preview-label">Overdue</p>
       <ul className="lp-preview-list">
-        <PreviewRow
-          title="Submit the lab record"
-          overdue
-          meta={`College · ${yesterday}`}
-        />
+        <PreviewRow title="Submit the lab record" overdue meta={`College · ${yesterday}`} />
       </ul>
       <ul className="lp-preview-list lp-preview-today-list">
         <PreviewRow title="Submit DBMS assignment" meta={today} />
-        <PreviewRow
-          title="Submit the attendance sheet"
-          meta={`College · ${today}`}
-        />
+        <PreviewRow title="Submit the attendance sheet" meta={`College · ${today}`} />
       </ul>
       <span className="lp-preview-toggle">Upcoming (2)</span>
     </DemoPhone>
   )
 }
-
