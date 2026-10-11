@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dhyaan Icon Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #78350f;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #92400e;
+      margin-bottom: 3rem;
+      font-size: 1.1rem;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+    
+    h2 {
+      color: #78350f;
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      font-weight: 600;
+      border-bottom: 2px solid #fde68a;
+      padding-bottom: 8px;
+    }
+    
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    
+    .icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      background: #fffbeb;
+      border-radius: 12px;
+      border: 2px solid #fde68a;
+    }
+    
+    .icon-item img {
+      display: block;
+      margin-bottom: 12px;
+    }
+    
+    .icon-label {
+      color: #78350f;
+      font-weight: 500;
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+    
+    .icon-size {
+      color: #92400e;
+      font-size: 0.85rem;
+    }
+    
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    
+    .context-item {
+      background: #fffbeb;
+      border-radius: 12px;
+      padding: 24px;
+      border: 2px solid #fde68a;
+    }
+    
+    .context-title {
+      color: #78350f;
+      font-weight: 600;
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+    }
+    
+    .phone-preview {
+      background: #1f2937;
+      border-radius: 28px;
+      padding: 12px;
+      margin: 16px auto;
+      max-width: 280px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .phone-screen {
+      background: #111827;
+      border-radius: 20px;
+      padding: 24px;
+      min-height: 400px;
+    }
+    
+    .home-screen {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 20px;
+    }
+    
+    .app-icon-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .app-icon-slot img {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .app-icon-slot span {
+      color: white;
+      font-size: 11px;
+      text-align: center;
+    }
+    
+    .comparison {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      padding: 24px;
+    }
+    
+    .comparison-item {
+      text-align: center;
+    }
+    
+    .comparison-item svg,
+    .comparison-item img {
+      display: block;
+      margin: 0 auto 12px;
+    }
+    
+    .design-notes {
+      background: #fef3c7;
+      border-left: 4px solid #b45309;
+      padding: 20px;
+      border-radius: 8px;
+      color: #78350f;
+      line-height: 1.7;
+    }
+    
+    .design-notes h3 {
+      margin-bottom: 12px;
+      color: #92400e;
+    }
+    
+    .design-notes ul {
+      margin-left: 20px;
+    }
+    
+    .design-notes li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🪷 Dhyaan Icon Design</h1>
+    <p class="subtitle">Professional lotus-inspired meditation icon with warm saffron aesthetic</p>
+    
+    <!-- Size Showcase -->
+    <div class="section">
+      <h2>📐 Size Variations</h2>
+      <div class="icon-grid">
+        <div class="icon-item">
+          <img src="public/favicon.svg" width="16" height="16" alt="16x16">
+          <div class="icon-label">Browser Tab</div>
+          <div class="icon-size">16×16</div>
+        </div>
+        <div class="icon-item">
+          <img src="public/favicon.svg" width="32" height="32" alt="32x32">
+          <div class="icon-label">Small</div>
+          <div class="icon-size">32×32</div>
+        </div>
+        <div class="icon-item">
+          <img src="public/favicon.svg" width="64" height="64" alt="64x64">
+          <div class="icon-label">Medium</div>
+          <div class="icon-size">64×64</div>
+        </div>
+        <div class="icon-item">
+          <img src="public/icon-192.png" width="96" height="96" alt="96x96">
+          <div class="icon-label">Large</div>
+          <div class="icon-size">96×96</div>
+        </div>
+        <div class="icon-item">
+          <img src="public/icon-192.png" width="128" height="128" alt="128x128">
+          <div class="icon-label">Extra Large</div>
+          <div class="icon-size">128×128</div>
+        </div>
+        <div class="icon-item">
+          <img src="public/icon-512.png" width="192" height="192" alt="192x192">
+          <div class="icon-label">PWA Standard</div>
+          <div class="icon-size">192×192</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Platform Context -->
+    <div class="section">
+      <h2>📱 Platform Contexts</h2>
+      <div class="context-grid">
+        <div class="context-item">
+          <div class="context-title">🍎 iOS Home Screen</div>
+          <div class="phone-preview">
+            <div class="phone-screen">
+              <div class="home-screen">
+                <div class="app-icon-slot">
+                  <img src="public/apple-touch-icon.png" alt="Dhyaan">
+                  <span>Dhyaan</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other">
+                  <span>Other</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other">
+                  <span>Other</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other">
+                  <span>Other</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; color: #78350f; margin-top: 12px;">
+            <small>Uses apple-touch-icon.png (180×180) with squircle mask</small>
+          </div>
+        </div>
+        
+        <div class="context-item">
+          <div class="context-title">🤖 Android Adaptive</div>
+          <div class="phone-preview">
+            <div class="phone-screen">
+              <div class="home-screen">
+                <div class="app-icon-slot">
+                  <img src="public/icon-maskable-192.png" alt="Dhyaan" style="border-radius: 50%;">
+                  <span>Dhyaan</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other" style="border-radius: 50%;">
+                  <span>Other</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other" style="border-radius: 50%;">
+                  <span>Other</span>
+                </div>
+                <div class="app-icon-slot" style="opacity: 0.3;">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23666' width='100' height='100'/%3E%3C/svg%3E" alt="Other" style="border-radius: 50%;">
+                  <span>Other</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; color: #78350f; margin-top: 12px;">
+            <small>Uses maskable icon with 86% scale for safe zone</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Design Breakdown -->
+    <div class="section">
+      <h2>🎨 Design Elements</h2>
+      <div class="comparison">
+        <div class="comparison-item">
+          <svg width="200" height="200" viewBox="0 0 100 100" style="background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <!-- Outer ring -->
+            <circle cx="50" cy="50" r="44" fill="none" stroke="#b45309" stroke-width="3"/>
+            <!-- Three lotus petals -->
+            <circle cx="50" cy="28" r="20" fill="#b45309" opacity="0.3"/>
+            <circle cx="32" cy="62" r="20" fill="#b45309" opacity="0.3"/>
+            <circle cx="68" cy="62" r="20" fill="#b45309" opacity="0.3"/>
+            <!-- Center meditation dot -->
+            <circle cx="50" cy="50" r="8" fill="#b45309"/>
+            
+            <!-- Labels -->
+            <text x="50" y="18" font-size="5" fill="#92400e" text-anchor="middle">Top Petal</text>
+            <text x="20" y="72" font-size="5" fill="#92400e" text-anchor="middle">Left</text>
+            <text x="80" y="72" font-size="5" fill="#92400e" text-anchor="middle">Right</text>
+            <text x="50" y="53" font-size="4" fill="white" text-anchor="middle" font-weight="bold">Focus</text>
+          </svg>
+          <div class="icon-label" style="margin-top: 16px;">Annotated Structure</div>
+        </div>
+        
+        <div class="comparison-item">
+          <svg width="200" height="200" viewBox="0 0 100 100" style="background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <!-- Outer ring -->
+            <circle cx="50" cy="50" r="44" fill="none" stroke="#b45309" stroke-width="3"/>
+            <!-- Three lotus petals -->
+            <circle cx="50" cy="28" r="20" fill="#b45309"/>
+            <circle cx="32" cy="62" r="20" fill="#b45309"/>
+            <circle cx="68" cy="62" r="20" fill="#b45309"/>
+            <!-- Center meditation dot -->
+            <circle cx="50" cy="50" r="8" fill="#b45309"/>
+          </svg>
+          <div class="icon-label" style="margin-top: 16px;">Final Design</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Design Philosophy -->
+    <div class="section">
+      <h2>💡 Design Philosophy</h2>
+      <div class="design-notes">
+        <h3>Symbolism</h3>
+        <ul>
+          <li><strong>Lotus Petals:</strong> Universal symbol of meditation and mindfulness</li>
+          <li><strong>Three-fold pattern:</strong> Mind-Body-Spirit or Past-Present-Future</li>
+          <li><strong>Center dot:</strong> Focal point of awareness and practice</li>
+          <li><strong>Outer ring:</strong> Containment and mindful boundaries</li>
+        </ul>
+        
+        <h3 style="margin-top: 20px;">Color Choice</h3>
+        <ul>
+          <li><strong>Saffron (#b45309):</strong> Deep turmeric shade with cultural significance</li>
+          <li><strong>Warm aesthetic:</strong> Matches the app's "calm & mindful" design language</li>
+          <li><strong>High contrast:</strong> Ensures legibility at all sizes (4.5:1+ ratio)</li>
+        </ul>
+        
+        <h3 style="margin-top: 20px;">Technical Excellence</h3>
+        <ul>
+          <li><strong>Simple geometry:</strong> Recognizable from 16×16 to 512×512</li>
+          <li><strong>4×4 supersampling:</strong> Smooth edges without anti-aliasing artifacts</li>
+          <li><strong>Zero dependencies:</strong> Generated entirely with Node.js built-ins</li>
+          <li><strong>Platform-optimized:</strong> Separate scales for standard, maskable, and iOS</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Color Palette -->
+    <div class="section">
+      <h2>🎨 Color Palette</h2>
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; padding: 24px;">
+        <div style="text-align: center;">
+          <div style="width: 120px; height: 120px; background: #b45309; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 12px;"></div>
+          <div style="color: #78350f; font-weight: 600;">#b45309</div>
+          <div style="color: #92400e; font-size: 0.9rem;">Primary (Light)</div>
+          <div style="color: #92400e; font-size: 0.85rem;">Deep Turmeric</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 120px; height: 120px; background: #f59e0b; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 12px;"></div>
+          <div style="color: #78350f; font-weight: 600;">#f59e0b</div>
+          <div style="color: #92400e; font-size: 0.9rem;">Dark Mode</div>
+          <div style="color: #92400e; font-size: 0.85rem;">Bright Amber</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 120px; height: 120px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #fde68a; margin-bottom: 12px;"></div>
+          <div style="color: #78350f; font-weight: 600;">#ffffff</div>
+          <div style="color: #92400e; font-size: 0.9rem;">Background</div>
+          <div style="color: #92400e; font-size: 0.85rem;">Warm Paper</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

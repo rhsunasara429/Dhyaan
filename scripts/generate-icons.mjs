@@ -17,16 +17,28 @@ import { fileURLToPath } from 'node:url';
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
-/* The mark, in the 100x100 viewBox used by src/App.tsx. Radii and strokes
- * match the in-app SVG exactly so the installed icon and the header logo
- * read as the same brand. */
-const MARK = { r1: 42, s1: 5, r2: 26, s2: 4, dot: 10 };
+/* The mark: a stylized lotus/meditation symbol representing mindfulness.
+ * Design: Three lotus petals arranged in a mandala pattern with a centered
+ * meditation circle, all within a 100x100 viewBox. The design is geometric,
+ * modern, and recognizable at small sizes. */
+const MARK = {
+  // Center meditation dot
+  centerDot: 8,
+  // Three petal arcs (top, bottom-left, bottom-right)
+  petals: [
+    { cx: 50, cy: 28, r: 20 },  // top petal
+    { cx: 32, cy: 62, r: 20 },  // bottom-left petal
+    { cx: 68, cy: 62, r: 20 },  // bottom-right petal
+  ],
+  // Outer ring for cohesion
+  outerRing: { r: 44, stroke: 3 },
+};
 
 /* Light/dark accents, mirrored from --color-accent in src/styles.css.
- * The dark variant is not installed by any platform (the OS copies the
- * manifest icon verbatim), so it is used for the dark-mode browser tab. */
-const LIGHT = '#2563eb';
-const DARK = '#58a6ff';
+ * Using the warm saffron/turmeric palette for a mindful, calm aesthetic.
+ * The dark variant is for the dark-mode browser tab. */
+const LIGHT = '#b45309';  // Deep turmeric/saffron
+const DARK = '#f59e0b';   // Brighter amber for dark mode
 
 /* Mark scale as a fraction of the canvas. The outer ring's edge sits at
  * 2*(42+2.5)/100 = 89% of the canvas width, so these are really just a
@@ -43,12 +55,31 @@ const SUPERSAMPLE = 4;
 
 /* ---------- rasteriser ---------- */
 
-function insideMark(d) {
-  return (
-    Math.abs(d - MARK.r1) <= MARK.s1 / 2 ||
-    Math.abs(d - MARK.r2) <= MARK.s2 / 2 ||
-    d <= MARK.dot
-  );
+function insideMark(x, y, centerX, centerY) {
+  const dx = x - centerX;
+  const dy = y - centerY;
+  const distFromCenter = Math.hypot(dx, dy);
+  
+  // Center meditation dot
+  if (distFromCenter <= MARK.centerDot) {
+    return true;
+  }
+  
+  // Outer ring
+  const ringDist = Math.abs(distFromCenter - MARK.outerRing.r);
+  if (ringDist <= MARK.outerRing.stroke / 2) {
+    return true;
+  }
+  
+  // Three lotus petals (filled circles)
+  for (const petal of MARK.petals) {
+    const petalDist = Math.hypot(x - petal.cx, y - petal.cy);
+    if (petalDist <= petal.r) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 function hexToRgb(hex) {
@@ -72,7 +103,10 @@ function render(size, { scale, color, background }) {
         for (let sx = 0; sx < SUPERSAMPLE; sx++) {
           const fx = x + (sx + 0.5) * step;
           const fy = y + (sy + 0.5) * step;
-          if (insideMark(Math.hypot(fx - mid, fy - mid) / unit)) hits++;
+          // Convert pixel coordinates to viewBox coordinates (0-100)
+          const vx = ((fx - mid) / unit) + 50;
+          const vy = ((fy - mid) / unit) + 50;
+          if (insideMark(vx, vy, 50, 50)) hits++;
         }
       }
       const cov = hits / total;
@@ -142,9 +176,14 @@ function encodePng(size, rgba) {
 
 function faviconSvg(color) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="${MARK.r1}" fill="none" stroke="${color}" stroke-width="${MARK.s1}"/>
-  <circle cx="50" cy="50" r="${MARK.r2}" fill="none" stroke="${color}" stroke-width="${MARK.s2}"/>
-  <circle cx="50" cy="50" r="${MARK.dot}" fill="${color}"/>
+  <!-- Outer ring -->
+  <circle cx="50" cy="50" r="${MARK.outerRing.r}" fill="none" stroke="${color}" stroke-width="${MARK.outerRing.stroke}"/>
+  <!-- Three lotus petals -->
+  <circle cx="${MARK.petals[0].cx}" cy="${MARK.petals[0].cy}" r="${MARK.petals[0].r}" fill="${color}"/>
+  <circle cx="${MARK.petals[1].cx}" cy="${MARK.petals[1].cy}" r="${MARK.petals[1].r}" fill="${color}"/>
+  <circle cx="${MARK.petals[2].cx}" cy="${MARK.petals[2].cy}" r="${MARK.petals[2].r}" fill="${color}"/>
+  <!-- Center meditation dot -->
+  <circle cx="50" cy="50" r="${MARK.centerDot}" fill="${color}"/>
 </svg>
 `;
 }

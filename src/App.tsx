@@ -116,9 +116,11 @@ function App() {
       <header className="app-header">
         <div className="app-title-group">
           <svg className="logo-mark" width="20" height="20" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5"/>
-            <circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" strokeWidth="4"/>
-            <circle cx="50" cy="50" r="10" fill="var(--color-accent)"/>
+            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="3"/>
+            <circle cx="50" cy="28" r="20" fill="currentColor"/>
+            <circle cx="32" cy="62" r="20" fill="currentColor"/>
+            <circle cx="68" cy="62" r="20" fill="currentColor"/>
+            <circle cx="50" cy="50" r="8" fill="var(--color-accent)"/>
           </svg>
           <h1 className="app-title">Dhyaan</h1>
         </div>
