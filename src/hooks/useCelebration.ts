@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Celebration } from './celebration.ts'
-import { celebrateFeedback, prefersReducedMotion } from './feedback.ts'
+import type { Celebration } from '../lib/celebration.ts'
+import { celebrateFeedback, prefersReducedMotion } from '../lib/feedback.ts'
 
 export type Burst = Celebration & {
   /** Changing id re-keys the overlay, which restarts the CSS animations. */

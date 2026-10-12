@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Note } from '../types.ts'
+import type { Note } from '../lib/types.ts'
 
 type NoteEditSheetProps = {
   note: Note

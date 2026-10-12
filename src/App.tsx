@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { resolveCelebration } from './celebration.ts'
+import { resolveCelebration } from './lib/celebration.ts'
 import { CaptureSheet } from './components/CaptureSheet.tsx'
 import { Celebration } from './components/Celebration.tsx'
 import { EditSheet } from './components/EditSheet.tsx'
@@ -9,8 +9,8 @@ import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
 import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
-import { todayLocal, formatLongDate, greetingForHour } from './dates.ts'
-import { selectNotesNewestFirst } from './notes.ts'
+import { todayLocal, formatLongDate, greetingForHour } from './lib/dates.ts'
+import { selectNotesNewestFirst } from './lib/notes.ts'
 import {
   selectCompleted,
   selectDailyProgress,
@@ -18,14 +18,14 @@ import {
   selectInbox,
   selectOverdue,
   selectUpcoming,
-} from './selectors.ts'
-import { countCompletedOn, currentStreak } from './streaks.ts'
-import { popCheckbox, ringPulse, tapFeedback, unlockAudio } from './feedback.ts'
-import { useCelebration } from './useCelebration.ts'
-import { useNotes } from './useNotes.ts'
-import { useReminder } from './useReminder.ts'
-import { useTasks } from './useTasks.ts'
-import { useTheme } from './useTheme.ts'
+} from './lib/selectors.ts'
+import { countCompletedOn, currentStreak } from './lib/streaks.ts'
+import { popCheckbox, ringPulse, tapFeedback, unlockAudio } from './lib/feedback.ts'
+import { useCelebration } from './hooks/useCelebration.ts'
+import { useNotes } from './hooks/useNotes.ts'
+import { useReminder } from './hooks/useReminder.ts'
+import { useTasks } from './hooks/useTasks.ts'
+import { useTheme } from './hooks/useTheme.ts'
 import ProgressRing from './components/ProgressRing.tsx'
 
 type Tab = 'inbox' | 'today' | 'notes'

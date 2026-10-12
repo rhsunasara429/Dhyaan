@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Task } from '../types.ts'
+import type { Task } from '../lib/types.ts'
 import { OrganizeFields } from './OrganizeFields.tsx'
 
 type CaptureSheetProps = {

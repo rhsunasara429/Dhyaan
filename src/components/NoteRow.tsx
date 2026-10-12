@@ -1,7 +1,7 @@
 import { useRef } from 'react'
-import type { Note } from '../types.ts'
-import { useSwipe } from '../useSwipe.ts'
-import { celebrateFeedback } from '../feedback.ts'
+import type { Note } from '../lib/types.ts'
+import { useSwipe } from '../hooks/useSwipe.ts'
+import { celebrateFeedback } from '../lib/feedback.ts'
 
 type NoteRowProps = {
   note: Note

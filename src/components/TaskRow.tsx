@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Task } from '../types.ts'
-import { useSwipe } from '../useSwipe.ts'
-import { tapFeedback, celebrateFeedback } from '../feedback.ts'
+import type { Task } from '../lib/types.ts'
+import { useSwipe } from '../hooks/useSwipe.ts'
+import { tapFeedback, celebrateFeedback } from '../lib/feedback.ts'
 
 type TaskRowProps = {
   task: Task

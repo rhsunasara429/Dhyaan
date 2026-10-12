@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { prefersReducedMotion } from './feedback.ts'
+import { prefersReducedMotion } from '../lib/feedback.ts'
 
 /**
  * Horizontal swipe gesture for list rows, built on native Pointer Events.

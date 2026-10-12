@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { loadTasks, saveTasks } from './storage.ts'
+import { loadTasks, saveTasks } from '../lib/storage.ts'
 import {
   buildTask,
   deleteTask,
@@ -7,8 +7,8 @@ import {
   setTaskPriority,
   toggleTask,
   updateTask,
-} from './tasks.ts'
-import type { Task } from './types.ts'
+} from '../lib/tasks.ts'
+import type { Task } from '../lib/types.ts'
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks())

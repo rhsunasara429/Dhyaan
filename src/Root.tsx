@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import App from './App.tsx'
 import LandingPage from './LandingPage.tsx'
-import { currentRoute, subscribe, type Route } from './routes.ts'
+import { currentRoute, subscribe, type Route } from './lib/routes.ts'
 
 const TITLES: Record<Route, string> = {
   landing: 'Dhyaan — capture college tasks and work through them today',

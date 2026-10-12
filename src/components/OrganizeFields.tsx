@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { addDaysLocal, todayLocal } from '../dates.ts'
-import { AREAS } from '../tasks.ts'
-import type { Area } from '../types.ts'
+import { addDaysLocal, todayLocal } from '../lib/dates.ts'
+import { AREAS } from '../lib/tasks.ts'
+import type { Area } from '../lib/types.ts'
 
 type OrganizeFieldsProps = {
   area: Area | null

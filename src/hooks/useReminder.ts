@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { todayLocal } from './dates.ts'
-import { playChime } from './feedback.ts'
-import { loadShownDay, saveShownDay } from './reminderStorage.ts'
-import { msUntilNextReminderHour, resolveReminder } from './reminders.ts'
+import { todayLocal } from '../lib/dates.ts'
+import { playChime } from '../lib/feedback.ts'
+import { loadShownDay, saveShownDay } from '../lib/reminderStorage.ts'
+import { msUntilNextReminderHour, resolveReminder } from '../lib/reminders.ts'
 
 /** setTimeout overflows past ~24.8 days; clamp so a clock change cannot break it. */
 const MAX_TIMEOUT = 2_147_483_000

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Burst } from '../useCelebration.ts'
+import type { Burst } from '../hooks/useCelebration.ts'
 
 type Particle = {
   key: number

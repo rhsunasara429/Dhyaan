@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
-import { loadNotes, saveNotes } from './noteStorage.ts'
-import { buildNote, deleteNote, updateNote } from './notes.ts'
-import type { Note } from './types.ts'
+import { loadNotes, saveNotes } from '../lib/noteStorage.ts'
+import { buildNote, deleteNote, updateNote } from '../lib/notes.ts'
+import type { Note } from '../lib/types.ts'
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>(() => loadNotes())

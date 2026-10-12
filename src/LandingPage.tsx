@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
-import { addDaysLocal, todayLocal } from './dates.ts'
-import { ROUTE_APP, navigate } from './routes.ts'
-import { useTheme } from './useTheme.ts'
+import { addDaysLocal, todayLocal } from './lib/dates.ts'
+import { ROUTE_APP, navigate } from './lib/routes.ts'
+import { useTheme } from './hooks/useTheme.ts'
 
 /**
  * Dhyaan landing page — redesigned as a premium SaaS product page.

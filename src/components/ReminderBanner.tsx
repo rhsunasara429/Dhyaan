@@ -1,4 +1,4 @@
-import { reminderCopy } from '../reminders.ts'
+import { reminderCopy } from '../lib/reminders.ts'
 
 type ReminderBannerProps = {
   openCount: number
