@@ -1,11 +1,6 @@
-import type { Area, Task, TaskPriority } from './types.ts'
+import type { Area, Task } from './types.ts'
 
 export const MAX_TITLE_LENGTH = 200
-
-export const TASK_PRIORITIES: readonly TaskPriority[] = [
-  'important',
-  'normal',
-]
 
 export const AREAS: readonly Area[] = [
   'college',
@@ -28,12 +23,16 @@ export function isDueDate(value: unknown): value is string {
   return typeof value === 'string' && DUE_DATE_PATTERN.test(value)
 }
 
-export function isTaskPriority(value: unknown): value is TaskPriority {
-  return value === 'important' || value === 'normal'
+export function isPriorityOrder(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= 1
+  )
 }
 
-export function normalizePriority(value: unknown): TaskPriority {
-  return value === 'important' ? 'important' : 'normal'
+export function normalizePriorityOrder(value: unknown): number | null {
+  return isPriorityOrder(value) ? value : null
 }
 
 function isDoneAt(value: unknown): boolean {
@@ -62,9 +61,10 @@ export function isTask(value: unknown): value is Task {
     (t.dueDate === null || isDueDate(t.dueDate)) &&
     (t.area === null || isArea(t.area)) &&
     (t.notes === null || typeof t.notes === 'string')
-    // Priority is intentionally not validated here: tasks stored before the
-    // field existed carry no key, and invalid values must fall back to
-    // 'normal' in storage.loadTasks instead of dropping the task.
+    // priorityOrder is intentionally not validated here: tasks stored before
+    // the field existed carry no key, and invalid values must fall back to
+    // null in storage.loadTasks instead of dropping the task. Same for the
+    // legacy `priority` ('important' | 'normal') string.
   )
 }
 
@@ -95,7 +95,7 @@ export function buildTask(title: unknown, init?: TaskInit): Task | null {
     dueDate,
     area,
     notes: null,
-    priority: 'normal',
+    priorityOrder: null,
   }
 }
 
@@ -106,15 +106,52 @@ function validateTitle(title: unknown): string | null {
   return trimmed
 }
 
+function maxPriorityOrder(tasks: Task[]): number {
+  let max = 0
+  for (const task of tasks) {
+    if (task.priorityOrder !== null && task.priorityOrder > max) {
+      max = task.priorityOrder
+    }
+  }
+  return max
+}
+
 export function toggleTask(
   tasks: Task[],
   id: string,
   now: number = Date.now(),
 ): Task[] {
+  const target = tasks.find((task) => task.id === id)
+  if (target === undefined) return tasks
+  const done = !target.done
+  if (!done) {
+    // Reopening never assigns a rank; a task cleared on completion comes back
+    // unranked.
+    return tasks.map((task) => {
+      if (task.id !== id) return task
+      return { ...task, done, doneAt: null }
+    })
+  }
+  // Completing a ranked task clears its rank and shifts higher ranks up so
+  // P-numbers stay contiguous (P1, P2, ... with no gaps).
+  const removedRank = target.priorityOrder
+  if (removedRank === null) {
+    return tasks.map((task) => {
+      if (task.id !== id) return task
+      return { ...task, done, doneAt: now }
+    })
+  }
   return tasks.map((task) => {
-    if (task.id !== id) return task
-    const done = !task.done
-    return { ...task, done, doneAt: done ? now : null }
+    if (task.id !== id) {
+      if (
+        task.priorityOrder !== null &&
+        task.priorityOrder > removedRank
+      ) {
+        return { ...task, priorityOrder: task.priorityOrder - 1 }
+      }
+      return task
+    }
+    return { ...task, done, doneAt: now, priorityOrder: null }
   })
 }
 
@@ -135,25 +172,27 @@ export function renameTask(
 }
 
 export function deleteTask(tasks: Task[], id: string): Task[] {
-  return tasks.filter((task) => task.id !== id)
+  const target = tasks.find((task) => task.id === id)
+  if (target === undefined) return tasks.filter((task) => task.id !== id)
+  const removedRank = target.priorityOrder
+  const remaining = tasks.filter((task) => task.id !== id)
+  if (removedRank === null) return remaining
+  return remaining.map((task) =>
+    task.priorityOrder !== null && task.priorityOrder > removedRank
+      ? { ...task, priorityOrder: task.priorityOrder - 1 }
+      : task,
+  )
 }
 
 export function updateTask(
   tasks: Task[],
   id: string,
-  patch: { title: unknown } & TaskOrganization & { priority?: unknown },
+  patch: { title: unknown } & TaskOrganization,
 ): Task[] | null {
   const trimmed = validateTitle(patch.title)
   if (trimmed === null) return null
   if (patch.area !== null && !isArea(patch.area)) return null
   if (patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
-  let nextPriority: TaskPriority | null = null
-  let changePriority = false
-  if (patch.priority !== undefined) {
-    if (!isTaskPriority(patch.priority)) return null
-    changePriority = true
-    nextPriority = patch.priority
-  }
   let found = false
   const next = tasks.map((task) => {
     if (task.id !== id) return task
@@ -163,24 +202,37 @@ export function updateTask(
       title: trimmed,
       area: patch.area,
       dueDate: patch.dueDate,
-      priority: changePriority ? (nextPriority as TaskPriority) : task.priority ?? 'normal',
     }
   })
   return found ? next : null
 }
 
-export function setTaskPriority(
+/**
+ * Star-click ranking: the first star click assigns P1, the next unranked star
+ * click assigns P2, and so on. Re-clicking (starring) a ranked task clears it
+ * and shifts higher ranks up.
+ */
+export function togglePriorityOrder(
   tasks: Task[],
   id: string,
-  priority: unknown,
 ): Task[] | null {
-  if (!isTaskPriority(priority)) return null
-  let found = false
-  const next = tasks.map((task) => {
-    if (task.id !== id) return task
-    found = true
-    if (task.priority === priority) return task
-    return { ...task, priority }
-  })
-  return found ? next : null
+  const target = tasks.find((task) => task.id === id)
+  if (target === undefined) return null
+  if (target.priorityOrder !== null) {
+    const removedRank = target.priorityOrder
+    return tasks.map((task) => {
+      if (task.id === id) return { ...task, priorityOrder: null }
+      if (
+        task.priorityOrder !== null &&
+        task.priorityOrder > removedRank
+      ) {
+        return { ...task, priorityOrder: task.priorityOrder - 1 }
+      }
+      return task
+    })
+  }
+  const nextRank = maxPriorityOrder(tasks) + 1
+  return tasks.map((task) =>
+    task.id === id ? { ...task, priorityOrder: nextRank } : task,
+  )
 }

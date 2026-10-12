@@ -19,7 +19,7 @@ function makeTask(id: string, overrides: Partial<Task> = {}): Task {
     dueDate: null,
     area: null,
     notes: null,
-    priority: 'normal',
+    priorityOrder: null,
     ...overrides,
   }
 }

@@ -551,10 +551,10 @@ textarea:focus-visible {
   color: var(--color-text-secondary);
 }
 
-/* ---- Task priority: compact row toggle + text badge ----
-   The filled vs. outline star carries the state by shape, not color
-   alone; the "Important" text badge reinforces it. Accent color comes
-   from theme tokens so light/dark both work. */
+/* ---- Task priority: click-to-rank P1, P2, ... ----
+   Unranked rows show an outline star; ranked rows swap it for a compact P-number
+   pill so click order is visible at a glance. Accent color comes from theme
+   tokens so light/dark both work. */
 .priority-toggle {
   flex: none;
   width: 36px;
@@ -583,10 +583,32 @@ textarea:focus-visible {
   color: var(--color-accent);
 }
 
+.priority-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .task-priority {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .task-row-important {

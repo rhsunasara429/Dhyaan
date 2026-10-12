@@ -4,7 +4,7 @@ import {
   buildTask,
   deleteTask,
   renameTask,
-  setTaskPriority,
+  togglePriorityOrder,
   toggleTask,
   updateTask,
 } from '../lib/tasks.ts'
@@ -47,7 +47,6 @@ export function useTasks() {
       title: string
       area: Task['area']
       dueDate: Task['dueDate']
-      priority?: Task['priority']
     },
   ): boolean {
     const next = updateTask(tasksRef.current, id, patch)
@@ -57,11 +56,7 @@ export function useTasks() {
   }
 
   function toggleTaskPriorityById(id: string): void {
-    const current = tasksRef.current.find((task) => task.id === id)
-    if (current === undefined) return
-    const nextPriority =
-      current.priority === 'important' ? 'normal' : 'important'
-    const next = setTaskPriority(tasksRef.current, id, nextPriority)
+    const next = togglePriorityOrder(tasksRef.current, id)
     if (next === null) return
     commit(next)
   }

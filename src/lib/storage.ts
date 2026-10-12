@@ -1,4 +1,4 @@
-import { isTask, normalizePriority } from './tasks.ts'
+import { isTask, normalizePriorityOrder } from './tasks.ts'
 import type { Task } from './types.ts'
 
 export const STORAGE_KEY = 'dhyaan.tasks.v1'
@@ -14,6 +14,11 @@ function defaultStore(): TaskStore | null {
   } catch {
     return null
   }
+}
+
+function isLegacyImportant(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false
+  return (value as Record<string, unknown>).priority === 'important'
 }
 
 export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
@@ -35,16 +40,52 @@ export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
   // Backward-compatible migration: tasks stored before `doneAt` existed (M6)
   // carry no such key. isTask tolerates the absence, so normalise here instead
   // of bumping STORAGE_KEY, which would orphan every existing task.
-  // Same for `priority`: missing or invalid values fall back to 'normal'.
-  return parsed
-    .filter(isTask)
-    .map((task) => ({
-      ...task,
-      doneAt: task.doneAt ?? null,
-      priority: normalizePriority(
-        (task as Record<string, unknown>).priority,
-      ),
-    }))
+  // Same for priority: `priorityOrder` (P1, P2, ...) replaces the legacy
+  // `priority` ('important' | 'normal') string. Missing or invalid values
+  // fall back to null (unranked); legacy 'important' tasks are appended after
+  // existing ranks, newest first, so previous Important-first order is kept.
+  type RankedSeed = { task: Task; legacyImportant: boolean }
+  const seeds: RankedSeed[] = []
+  for (const entry of parsed) {
+    if (!isTask(entry)) continue
+    const record = entry as Record<string, unknown>
+    const { priority: _legacy, ...rest } = record
+    const base = rest as unknown as Task
+    seeds.push({
+      task: {
+        ...base,
+        doneAt: base.doneAt ?? null,
+        priorityOrder: normalizePriorityOrder(record.priorityOrder),
+      },
+      legacyImportant: isLegacyImportant(entry),
+    })
+  }
+
+  // Compact existing ranks to 1..N so gaps or duplicates from older builds
+  // (or hand-edited storage) cannot leak into the UI.
+  const ranked = seeds
+    .filter((seed) => seed.task.priorityOrder !== null)
+    .sort(
+      (a, b) =>
+        (a.task.priorityOrder as number) - (b.task.priorityOrder as number) ||
+        b.task.createdAt - a.task.createdAt,
+    )
+  ranked.forEach((seed, index) => {
+    seed.task.priorityOrder = index + 1
+  })
+
+  // Migrate legacy Important tasks (no valid rank) after existing ranks.
+  const legacy = seeds
+    .filter(
+      (seed) =>
+        seed.task.priorityOrder === null && seed.legacyImportant,
+    )
+    .sort((a, b) => b.task.createdAt - a.task.createdAt)
+  legacy.forEach((seed, index) => {
+    seed.task.priorityOrder = ranked.length + index + 1
+  })
+
+  return seeds.map((seed) => seed.task)
 }
 
 export function saveTasks(

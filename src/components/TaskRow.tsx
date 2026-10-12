@@ -30,7 +30,8 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
   }, [task.done])
 
   const overdue = !task.done && task.dueDate !== null && task.dueDate < today
-  const important = task.priority === 'important'
+  const rank = task.priorityOrder
+  const ranked = rank !== null
   const meta: string[] = []
   if (task.area !== null) meta.push(areaLabel(task.area))
   if (task.dueDate !== null) meta.push(task.dueDate)
@@ -67,7 +68,7 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
       </div>
       <div
         ref={surfaceRef}
-        className={`${task.done ? 'task-row task-row-done' : 'task-row'}${important ? ' task-row-important' : ''} ${isFlashing ? 'task-row-flash' : ''}`}
+        className={`${task.done ? 'task-row task-row-done' : 'task-row'}${ranked ? ' task-row-important' : ''} ${isFlashing ? 'task-row-flash' : ''}`}
         {...handlers}
       >
         <button
@@ -93,9 +94,9 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
           onClick={() => onEdit(task.id)}
         >
           <span className="task-title-text">{task.title}</span>
-          {important ? (
+          {ranked ? (
             <span className="task-priority" aria-hidden="true">
-              ★ Important
+              P{rank}
             </span>
           ) : null}
           {overdue ? <span className="task-overdue">Overdue</span> : null}
@@ -106,17 +107,17 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
         <button
           type="button"
           className={
-            important
+            ranked
               ? 'priority-toggle priority-toggle-active'
               : 'priority-toggle'
           }
-          aria-pressed={important}
+          aria-pressed={ranked}
           aria-label={
-            important
-              ? `Mark "${task.title}" as normal priority`
-              : `Mark "${task.title}" as important`
+            ranked
+              ? `Clear priority P${rank} from "${task.title}"`
+              : `Set "${task.title}" as priority`
           }
-          title={important ? 'Important — select for normal' : 'Mark as important'}
+          title={ranked ? `P${rank} — select to clear` : 'Set priority rank'}
           onClick={(event) => {
             event.stopPropagation()
             onTogglePriority(task.id)
@@ -125,22 +126,27 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
             event.stopPropagation()
           }}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            fill={important ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
+          {ranked ? (
+            <span className="priority-rank" aria-hidden="true">
+              P{rank}
+            </span>
+          ) : (
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          )}
         </button>
       </div>
     </li>
   )
 }
-

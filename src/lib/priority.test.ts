@@ -11,7 +11,7 @@ import {
   deleteTask,
   isTask,
   renameTask,
-  setTaskPriority,
+  togglePriorityOrder,
   toggleTask,
   updateTask,
 } from './tasks.ts'
@@ -29,7 +29,7 @@ function makeTask(id: string, overrides: Partial<Task> = {}): Task {
     dueDate: null,
     area: null,
     notes: null,
-    priority: 'normal',
+    priorityOrder: null,
     ...overrides,
   }
 }
@@ -45,8 +45,8 @@ function fakeStore(seed: Record<string, string> = {}) {
   return { store }
 }
 
-describe('task priority', () => {
-  it('loads existing stored tasks without a priority as Normal', () => {
+describe('task priority order (click-to-rank)', () => {
+  it('loads existing stored tasks without a rank as unranked', () => {
     const legacy = {
       id: 'old',
       title: 'old task',
@@ -62,146 +62,220 @@ describe('task priority', () => {
     })
     const loaded = loadTasks(store)
     expect(loaded).toHaveLength(1)
-    expect(loaded[0]?.priority).toBe('normal')
+    expect(loaded[0]?.priorityOrder).toBeNull()
   })
 
-  it('defaults newly created tasks to Normal', () => {
-    expect(buildTask('Study physics')?.priority).toBe('normal')
+  it('defaults newly created tasks to unranked', () => {
+    expect(buildTask('Study physics')?.priorityOrder).toBeNull()
   })
 
-  it('persists Important and Normal values across a reload', () => {
+  it('persists ranks across a reload', () => {
     const { store } = fakeStore()
     saveTasks(
       [
-        makeTask('a', { priority: 'important' }),
-        makeTask('b', { priority: 'normal' }),
+        makeTask('a', { priorityOrder: 1 }),
+        makeTask('b', { priorityOrder: 2 }),
+        makeTask('c', { priorityOrder: null }),
       ],
       store,
     )
     const loaded = loadTasks(store)
-    expect(loaded.map((t) => [t.id, t.priority])).toEqual([
-      ['a', 'important'],
-      ['b', 'normal'],
+    expect(loaded.map((t) => [t.id, t.priorityOrder])).toEqual([
+      ['a', 1],
+      ['b', 2],
+      ['c', null],
     ])
   })
 
-  it('falls back to Normal for invalid stored priority values', () => {
-    for (const bad of ['urgent', 'HIGH', '', 42, null, true]) {
+  it('falls back to unranked for invalid stored rank values', () => {
+    for (const bad of [0, -1, 1.5, NaN, '1', 'urgent', true, {}, []]) {
       const raw = {
         ...makeTask('x'),
-        priority: bad,
+        priorityOrder: bad,
       }
       const { store } = fakeStore({
         [STORAGE_KEY]: JSON.stringify([raw]),
       })
       const loaded = loadTasks(store)
       expect(loaded).toHaveLength(1)
-      expect(loaded[0]?.priority).toBe('normal')
+      expect(loaded[0]?.priorityOrder).toBeNull()
     }
   })
 
-  it('accepts stored tasks with missing or invalid priority instead of dropping them', () => {
+  it('accepts stored tasks with missing or invalid rank instead of dropping them', () => {
     const missing = { ...makeTask('a') } as Record<string, unknown>
-    delete missing.priority
+    delete missing.priorityOrder
     expect(isTask(missing)).toBe(true)
-    const invalid = { ...makeTask('b'), priority: 'urgent' }
+    const invalid = { ...makeTask('b'), priorityOrder: 'urgent' }
     expect(isTask(invalid)).toBe(true)
   })
 
-  it('orders Important before Normal in Overdue', () => {
-    const normal = makeTask('n', {
-      dueDate: '2026-09-20',
-      createdAt: 200,
-      priority: 'normal',
-    })
-    const important = makeTask('i', {
-      dueDate: '2026-09-24',
-      createdAt: 100,
+  it('migrates legacy Important tasks to ranks, newest first', () => {
+    const oldImportant = {
+      ...makeTask('old'),
       priority: 'important',
+      createdAt: 100,
+    }
+    const newImportant = {
+      ...makeTask('new'),
+      priority: 'important',
+      createdAt: 300,
+    }
+    const normal = { ...makeTask('n'), priority: 'normal' }
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([oldImportant, normal, newImportant]),
     })
-    // Important sorts first even with a later due date.
-    expect(selectOverdue([normal, important], TODAY).map((t) => t.id)).toEqual([
-      'i',
-      'n',
+    const loaded = loadTasks(store)
+    const byId = new Map(loaded.map((t) => [t.id, t.priorityOrder]))
+    // Newest important becomes P1, oldest P2, normal stays unranked.
+    expect(byId.get('new')).toBe(1)
+    expect(byId.get('old')).toBe(2)
+    expect(byId.get('n')).toBeNull()
+  })
+
+  it('assigns P1 then P2 in star-click order (Maths then C++)', () => {
+    const tasks = [
+      makeTask('maths', { dueDate: TODAY, createdAt: 100 }),
+      makeTask('cpp', { dueDate: TODAY, createdAt: 200 }),
+    ]
+    const afterMaths = togglePriorityOrder(tasks, 'maths')
+    expect(afterMaths?.find((t) => t.id === 'maths')?.priorityOrder).toBe(1)
+    const afterCpp = togglePriorityOrder(afterMaths ?? [], 'cpp')
+    expect(afterCpp?.find((t) => t.id === 'maths')?.priorityOrder).toBe(1)
+    expect(afterCpp?.find((t) => t.id === 'cpp')?.priorityOrder).toBe(2)
+    // Today shows Maths first, then C++.
+    expect(selectDueToday(afterCpp ?? [], TODAY).map((t) => t.id)).toEqual([
+      'maths',
+      'cpp',
     ])
   })
 
-  it('orders Important before Normal in due-today', () => {
-    const normal = makeTask('n', {
-      dueDate: TODAY,
-      createdAt: 200,
-      priority: 'normal',
-    })
-    const important = makeTask('i', {
-      dueDate: TODAY,
-      createdAt: 100,
-      priority: 'important',
-    })
-    expect(selectDueToday([normal, important], TODAY).map((t) => t.id)).toEqual(
-      ['i', 'n'],
-    )
+  it('re-clicking a ranked task clears it and shifts higher ranks up', () => {
+    const tasks = [
+      makeTask('a', { priorityOrder: 1 }),
+      makeTask('b', { priorityOrder: 2 }),
+      makeTask('c', { priorityOrder: 3 }),
+    ]
+    const next = togglePriorityOrder(tasks, 'a')
+    expect(next?.find((t) => t.id === 'a')?.priorityOrder).toBeNull()
+    expect(next?.find((t) => t.id === 'b')?.priorityOrder).toBe(1)
+    expect(next?.find((t) => t.id === 'c')?.priorityOrder).toBe(2)
   })
 
-  it('orders Important before Normal in Upcoming', () => {
-    const normal = makeTask('n', {
+  it('orders P1 before P2 before unranked in Overdue', () => {
+    const unranked = makeTask('u', {
+      dueDate: '2026-09-20',
+      createdAt: 200,
+      priorityOrder: null,
+    })
+    const p2 = makeTask('p2', {
+      dueDate: '2026-09-20',
+      createdAt: 100,
+      priorityOrder: 2,
+    })
+    const p1 = makeTask('p1', {
+      dueDate: '2026-09-24',
+      createdAt: 50,
+      priorityOrder: 1,
+    })
+    // P1 sorts first even with a later due date.
+    expect(selectOverdue([unranked, p2, p1], TODAY).map((t) => t.id)).toEqual([
+      'p1',
+      'p2',
+      'u',
+    ])
+  })
+
+  it('orders P1 before P2 before unranked in due-today', () => {
+    const unranked = makeTask('u', {
+      dueDate: TODAY,
+      createdAt: 500,
+      priorityOrder: null,
+    })
+    const p2 = makeTask('p2', {
+      dueDate: TODAY,
+      createdAt: 100,
+      priorityOrder: 2,
+    })
+    const p1 = makeTask('p1', {
+      dueDate: TODAY,
+      createdAt: 50,
+      priorityOrder: 1,
+    })
+    expect(selectDueToday([unranked, p2, p1], TODAY).map((t) => t.id)).toEqual([
+      'p1',
+      'p2',
+      'u',
+    ])
+  })
+
+  it('orders P1 before P2 before unranked in Upcoming', () => {
+    const unranked = makeTask('u', {
       dueDate: '2026-09-26',
-      createdAt: 200,
-      priority: 'normal',
+      createdAt: 500,
+      priorityOrder: null,
     })
-    const important = makeTask('i', {
-      dueDate: '2026-10-01',
+    const p2 = makeTask('p2', {
+      dueDate: '2026-09-26',
       createdAt: 100,
-      priority: 'important',
+      priorityOrder: 2,
     })
-    expect(selectUpcoming([normal, important], TODAY).map((t) => t.id)).toEqual(
-      ['i', 'n'],
-    )
+    const p1 = makeTask('p1', {
+      dueDate: '2026-10-01',
+      createdAt: 50,
+      priorityOrder: 1,
+    })
+    expect(selectUpcoming([unranked, p2, p1], TODAY).map((t) => t.id)).toEqual([
+      'p1',
+      'p2',
+      'u',
+    ])
   })
 
-  it('preserves existing ordering within the same priority', () => {
-    // Due-today existing order is newest first.
+  it('preserves existing ordering among unranked tasks', () => {
+    // Due-today unranked order is newest first.
     const tOld = makeTask('t-old', {
       dueDate: TODAY,
       createdAt: 1,
-      priority: 'important',
+      priorityOrder: null,
     })
     const tNew = makeTask('t-new', {
       dueDate: TODAY,
       createdAt: 2,
-      priority: 'important',
+      priorityOrder: null,
     })
     expect(selectDueToday([tOld, tNew], TODAY).map((t) => t.id)).toEqual([
       't-new',
       't-old',
     ])
-    // Overdue existing order is oldest due date first, newest ties first.
+    // Overdue unranked order is oldest due date first, newest ties first.
     const older = makeTask('older', {
       dueDate: '2026-09-20',
       createdAt: 1,
-      priority: 'normal',
+      priorityOrder: null,
     })
     const tieNew = makeTask('tie-new', {
       dueDate: '2026-09-24',
       createdAt: 50,
-      priority: 'normal',
+      priorityOrder: null,
     })
     const tieOld = makeTask('tie-old', {
       dueDate: '2026-09-24',
       createdAt: 10,
-      priority: 'normal',
+      priorityOrder: null,
     })
     expect(
       selectOverdue([tieOld, older, tieNew], TODAY).map((t) => t.id),
     ).toEqual(['older', 'tie-new', 'tie-old'])
   })
 
-  it('updates Today ordering immediately when priority changes', () => {
+  it('updates Today ordering immediately when rank changes', () => {
     const tasks = [
-      makeTask('a', { dueDate: TODAY, createdAt: 200, priority: 'normal' }),
-      makeTask('b', { dueDate: TODAY, createdAt: 100, priority: 'normal' }),
+      makeTask('a', { dueDate: TODAY, createdAt: 200, priorityOrder: null }),
+      makeTask('b', { dueDate: TODAY, createdAt: 100, priorityOrder: null }),
     ]
     expect(selectDueToday(tasks, TODAY).map((t) => t.id)).toEqual(['a', 'b'])
-    const next = setTaskPriority(tasks, 'b', 'important')
+    const next = togglePriorityOrder(tasks, 'b')
     expect(next).not.toBeNull()
     expect(selectDueToday(next ?? [], TODAY).map((t) => t.id)).toEqual([
       'b',
@@ -209,67 +283,73 @@ describe('task priority', () => {
     ])
   })
 
-  it('keeps Inbox ordering unchanged (newest first, no priority sorting)', () => {
-    const importantOld = makeTask('old', {
+  it('keeps Inbox ordering unchanged (newest first, no rank sorting)', () => {
+    const rankedOld = makeTask('old', {
       createdAt: 100,
-      priority: 'important',
+      priorityOrder: 1,
     })
-    const normalNew = makeTask('new', { createdAt: 300, priority: 'normal' })
-    const normalMid = makeTask('mid', { createdAt: 200, priority: 'normal' })
+    const unrankedNew = makeTask('new', { createdAt: 300, priorityOrder: null })
+    const unrankedMid = makeTask('mid', { createdAt: 200, priorityOrder: null })
     expect(
-      selectInbox([importantOld, normalNew, normalMid]).map((t) => t.id),
+      selectInbox([rankedOld, unrankedNew, unrankedMid]).map((t) => t.id),
     ).toEqual(['new', 'mid', 'old'])
   })
 
-  it('keeps priority out of section boundaries', () => {
-    const importantInbox = makeTask('inbox', { priority: 'important' })
-    expect(selectOverdue([importantInbox], TODAY)).toEqual([])
-    expect(selectDueToday([importantInbox], TODAY)).toEqual([])
-    expect(selectUpcoming([importantInbox], TODAY)).toEqual([])
-    expect(selectInbox([importantInbox]).map((t) => t.id)).toEqual(['inbox'])
+  it('keeps rank out of section boundaries', () => {
+    const rankedInbox = makeTask('inbox', { priorityOrder: 1 })
+    expect(selectOverdue([rankedInbox], TODAY)).toEqual([])
+    expect(selectDueToday([rankedInbox], TODAY)).toEqual([])
+    expect(selectUpcoming([rankedInbox], TODAY)).toEqual([])
+    expect(selectInbox([rankedInbox]).map((t) => t.id)).toEqual(['inbox'])
   })
 
-  it('preserves completion, edit, and delete behavior with priority present', () => {
+  it('completing a ranked task clears it and shifts higher ranks', () => {
+    const tasks = [
+      makeTask('a', { priorityOrder: 1, dueDate: TODAY }),
+      makeTask('b', { priorityOrder: 2, dueDate: TODAY }),
+    ]
+    const done = toggleTask(tasks, 'a', 555)
+    expect(done.find((t) => t.id === 'a')?.priorityOrder).toBeNull()
+    expect(done.find((t) => t.id === 'a')?.done).toBe(true)
+    expect(done.find((t) => t.id === 'b')?.priorityOrder).toBe(1)
+  })
+
+  it('deleting a ranked task shifts higher ranks', () => {
+    const tasks = [
+      makeTask('a', { priorityOrder: 1 }),
+      makeTask('b', { priorityOrder: 2 }),
+      makeTask('c', { priorityOrder: 3 }),
+    ]
+    const next = deleteTask(tasks, 'b')
+    expect(next.map((t) => t.id)).toEqual(['a', 'c'])
+    expect(next.find((t) => t.id === 'c')?.priorityOrder).toBe(2)
+  })
+
+  it('preserves completion, edit, and delete behavior with rank present', () => {
     const task = makeTask('a', {
-      priority: 'important',
+      priorityOrder: 1,
       dueDate: TODAY,
       area: 'college',
       notes: 'keep',
     })
-    // Completion preserves priority.
+    // Completion preserves other fields but clears the rank.
     const done = toggleTask([task], 'a', 555)
-    expect(done[0]).toEqual({ ...task, done: true, doneAt: 555 })
-    // Edit can change priority and preserves other fields.
+    expect(done[0]).toEqual({ ...task, done: true, doneAt: 555, priorityOrder: null })
+    // Edit preserves the rank and other fields.
     const edited = updateTask([task], 'a', {
       title: 'renamed',
       area: 'learning',
       dueDate: TODAY,
-      priority: 'normal',
     })
     expect(edited?.[0]).toEqual({
       ...task,
       title: 'renamed',
       area: 'learning',
       dueDate: TODAY,
-      priority: 'normal',
     })
-    // Edit without a priority key preserves the existing priority.
-    const preserved = updateTask([task], 'a', {
-      title: 'renamed',
-      area: task.area,
-      dueDate: task.dueDate,
-    })
-    expect(preserved?.[0]?.priority).toBe('important')
-    // Invalid priority values are rejected.
-    expect(
-      updateTask([task], 'a', {
-        title: 'ok',
-        area: null,
-        dueDate: null,
-        priority: 'urgent',
-      }),
-    ).toBeNull()
-    expect(setTaskPriority([task], 'a', 'urgent')).toBeNull()
+    expect(edited?.[0]?.priorityOrder).toBe(1)
+    // Unknown id returns null.
+    expect(togglePriorityOrder([task], 'missing')).toBeNull()
     // Rename and delete still work.
     expect(renameTask([task], 'a', 'new name')?.[0]?.title).toBe('new name')
     expect(deleteTask([task, makeTask('b')], 'a').map((t) => t.id)).toEqual([

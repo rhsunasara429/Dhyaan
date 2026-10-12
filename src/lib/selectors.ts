@@ -1,13 +1,21 @@
-import type { Task } from './types.ts'
 import { dayKeyFromTimestamp } from './dates.ts'
+import type { Task } from './types.ts'
 
-/** Important tasks sort before Normal ones. Anything unexpected (e.g. a
- *  task built before the field existed) behaves as Normal. */
-function priorityRank(task: Task): number {
-  return task.priority === 'important' ? 0 : 1
+/** Ranked tasks (P1, P2, ...) sort before unranked ones, in rank order.
+ *  Returns -1 / 1 when exactly one side is ranked, the rank delta when both
+ *  are ranked, and 0 when neither is (caller falls through to its tie-break).
+ */
+function comparePriorityOrder(a: Task, b: Task): number {
+  const rankA = a.priorityOrder
+  const rankB = b.priorityOrder
+  if (rankA !== null && rankB !== null) return rankA - rankB
+  if (rankA !== null) return -1
+  if (rankB !== null) return 1
+  return 0
 }
 
 export function selectInbox(tasks: Task[]): Task[] {
+  // Inbox keeps newest-first ordering; click-rank only affects Today.
   return tasks
     .filter((task) => !task.done && task.dueDate === null)
     .sort((a, b) => b.createdAt - a.createdAt)
@@ -26,8 +34,8 @@ export function selectOverdue(tasks: Task[], today: string): Task[] {
         !task.done && task.dueDate !== null && task.dueDate < today,
     )
     .sort((a, b) => {
-      const priorityOrder = priorityRank(a) - priorityRank(b)
-      if (priorityOrder !== 0) return priorityOrder
+      const rankOrder = comparePriorityOrder(a, b)
+      if (rankOrder !== 0) return rankOrder
       const dateOrder = (a.dueDate as string).localeCompare(b.dueDate as string)
       return dateOrder !== 0 ? dateOrder : b.createdAt - a.createdAt
     })
@@ -37,8 +45,8 @@ export function selectDueToday(tasks: Task[], today: string): Task[] {
   return tasks
     .filter((task) => !task.done && task.dueDate === today)
     .sort((a, b) => {
-      const priorityOrder = priorityRank(a) - priorityRank(b)
-      if (priorityOrder !== 0) return priorityOrder
+      const rankOrder = comparePriorityOrder(a, b)
+      if (rankOrder !== 0) return rankOrder
       return b.createdAt - a.createdAt
     })
 }
@@ -50,8 +58,8 @@ export function selectUpcoming(tasks: Task[], today: string): Task[] {
         !task.done && task.dueDate !== null && task.dueDate > today,
     )
     .sort((a, b) => {
-      const priorityOrder = priorityRank(a) - priorityRank(b)
-      if (priorityOrder !== 0) return priorityOrder
+      const rankOrder = comparePriorityOrder(a, b)
+      if (rankOrder !== 0) return rankOrder
       const dateOrder = (a.dueDate as string).localeCompare(b.dueDate as string)
       return dateOrder !== 0 ? dateOrder : b.createdAt - a.createdAt
     })

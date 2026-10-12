@@ -26,7 +26,7 @@ function makeTask(id: string): Task {
     dueDate: null,
     area: null,
     notes: null,
-    priority: 'normal',
+    priorityOrder: null,
   }
 }
 
@@ -34,6 +34,7 @@ function makeTask(id: string): Task {
 function legacyTask(id: string): Record<string, unknown> {
   const task = makeTask(id) as Record<string, unknown>
   delete task.doneAt
+  delete task.priorityOrder
   delete task.priority
   return task
 }
