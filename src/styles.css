@@ -551,6 +551,48 @@ textarea:focus-visible {
   color: var(--color-text-secondary);
 }
 
+/* ---- Task priority: compact row toggle + text badge ----
+   The filled vs. outline star carries the state by shape, not color
+   alone; the "Important" text badge reinforces it. Accent color comes
+   from theme tokens so light/dark both work. */
+.priority-toggle {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.priority-toggle:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-accent);
+}
+
+.priority-toggle:active {
+  transform: scale(0.94);
+}
+
+.priority-toggle-active {
+  color: var(--color-accent);
+}
+
+.task-priority {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-accent);
+}
+
+.task-row-important {
+  border-color: var(--color-accent);
+}
+
 .task-row-done .task-title-text {
   text-decoration: line-through;
   text-decoration-color: var(--color-text-tertiary);

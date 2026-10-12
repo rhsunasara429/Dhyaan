@@ -1,6 +1,12 @@
 import type { Task } from './types.ts'
 import { dayKeyFromTimestamp } from './dates.ts'
 
+/** Important tasks sort before Normal ones. Anything unexpected (e.g. a
+ *  task built before the field existed) behaves as Normal. */
+function priorityRank(task: Task): number {
+  return task.priority === 'important' ? 0 : 1
+}
+
 export function selectInbox(tasks: Task[]): Task[] {
   return tasks
     .filter((task) => !task.done && task.dueDate === null)
@@ -20,6 +26,8 @@ export function selectOverdue(tasks: Task[], today: string): Task[] {
         !task.done && task.dueDate !== null && task.dueDate < today,
     )
     .sort((a, b) => {
+      const priorityOrder = priorityRank(a) - priorityRank(b)
+      if (priorityOrder !== 0) return priorityOrder
       const dateOrder = (a.dueDate as string).localeCompare(b.dueDate as string)
       return dateOrder !== 0 ? dateOrder : b.createdAt - a.createdAt
     })
@@ -28,7 +36,11 @@ export function selectOverdue(tasks: Task[], today: string): Task[] {
 export function selectDueToday(tasks: Task[], today: string): Task[] {
   return tasks
     .filter((task) => !task.done && task.dueDate === today)
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => {
+      const priorityOrder = priorityRank(a) - priorityRank(b)
+      if (priorityOrder !== 0) return priorityOrder
+      return b.createdAt - a.createdAt
+    })
 }
 
 export function selectUpcoming(tasks: Task[], today: string): Task[] {
@@ -38,6 +50,8 @@ export function selectUpcoming(tasks: Task[], today: string): Task[] {
         !task.done && task.dueDate !== null && task.dueDate > today,
     )
     .sort((a, b) => {
+      const priorityOrder = priorityRank(a) - priorityRank(b)
+      if (priorityOrder !== 0) return priorityOrder
       const dateOrder = (a.dueDate as string).localeCompare(b.dueDate as string)
       return dateOrder !== 0 ? dateOrder : b.createdAt - a.createdAt
     })

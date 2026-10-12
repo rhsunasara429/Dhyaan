@@ -1,6 +1,11 @@
-import type { Area, Task } from './types.ts'
+import type { Area, Task, TaskPriority } from './types.ts'
 
 export const MAX_TITLE_LENGTH = 200
+
+export const TASK_PRIORITIES: readonly TaskPriority[] = [
+  'important',
+  'normal',
+]
 
 export const AREAS: readonly Area[] = [
   'college',
@@ -21,6 +26,14 @@ export function isArea(value: unknown): value is Area {
 
 export function isDueDate(value: unknown): value is string {
   return typeof value === 'string' && DUE_DATE_PATTERN.test(value)
+}
+
+export function isTaskPriority(value: unknown): value is TaskPriority {
+  return value === 'important' || value === 'normal'
+}
+
+export function normalizePriority(value: unknown): TaskPriority {
+  return value === 'important' ? 'important' : 'normal'
 }
 
 function isDoneAt(value: unknown): boolean {
@@ -49,6 +62,9 @@ export function isTask(value: unknown): value is Task {
     (t.dueDate === null || isDueDate(t.dueDate)) &&
     (t.area === null || isArea(t.area)) &&
     (t.notes === null || typeof t.notes === 'string')
+    // Priority is intentionally not validated here: tasks stored before the
+    // field existed carry no key, and invalid values must fall back to
+    // 'normal' in storage.loadTasks instead of dropping the task.
   )
 }
 
@@ -79,6 +95,7 @@ export function buildTask(title: unknown, init?: TaskInit): Task | null {
     dueDate,
     area,
     notes: null,
+    priority: 'normal',
   }
 }
 
@@ -124,17 +141,46 @@ export function deleteTask(tasks: Task[], id: string): Task[] {
 export function updateTask(
   tasks: Task[],
   id: string,
-  patch: { title: unknown } & TaskOrganization,
+  patch: { title: unknown } & TaskOrganization & { priority?: unknown },
 ): Task[] | null {
   const trimmed = validateTitle(patch.title)
   if (trimmed === null) return null
   if (patch.area !== null && !isArea(patch.area)) return null
   if (patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
+  let nextPriority: TaskPriority | null = null
+  let changePriority = false
+  if (patch.priority !== undefined) {
+    if (!isTaskPriority(patch.priority)) return null
+    changePriority = true
+    nextPriority = patch.priority
+  }
   let found = false
   const next = tasks.map((task) => {
     if (task.id !== id) return task
     found = true
-    return { ...task, title: trimmed, area: patch.area, dueDate: patch.dueDate }
+    return {
+      ...task,
+      title: trimmed,
+      area: patch.area,
+      dueDate: patch.dueDate,
+      priority: changePriority ? (nextPriority as TaskPriority) : task.priority ?? 'normal',
+    }
+  })
+  return found ? next : null
+}
+
+export function setTaskPriority(
+  tasks: Task[],
+  id: string,
+  priority: unknown,
+): Task[] | null {
+  if (!isTaskPriority(priority)) return null
+  let found = false
+  const next = tasks.map((task) => {
+    if (task.id !== id) return task
+    found = true
+    if (task.priority === priority) return task
+    return { ...task, priority }
   })
   return found ? next : null
 }

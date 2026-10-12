@@ -5,6 +5,8 @@ export type Area =
   | 'personal'
   | 'ideas'
 
+export type TaskPriority = 'important' | 'normal'
+
 export type Task = {
   id: string
   title: string
@@ -16,6 +18,9 @@ export type Task = {
   dueDate: string | null
   area: Area | null
   notes: string | null
+  /** Added for task priority. Absent or invalid on older stored tasks,
+   *  which behave as 'normal'. */
+  priority: TaskPriority
 }
 
 export type Note = {

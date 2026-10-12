@@ -1,4 +1,4 @@
-import { isTask } from './tasks.ts'
+import { isTask, normalizePriority } from './tasks.ts'
 import type { Task } from './types.ts'
 
 export const STORAGE_KEY = 'dhyaan.tasks.v1'
@@ -35,9 +35,16 @@ export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
   // Backward-compatible migration: tasks stored before `doneAt` existed (M6)
   // carry no such key. isTask tolerates the absence, so normalise here instead
   // of bumping STORAGE_KEY, which would orphan every existing task.
+  // Same for `priority`: missing or invalid values fall back to 'normal'.
   return parsed
     .filter(isTask)
-    .map((task) => ({ ...task, doneAt: task.doneAt ?? null }))
+    .map((task) => ({
+      ...task,
+      doneAt: task.doneAt ?? null,
+      priority: normalizePriority(
+        (task as Record<string, unknown>).priority,
+      ),
+    }))
 }
 
 export function saveTasks(

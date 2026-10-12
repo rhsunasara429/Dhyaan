@@ -10,13 +10,14 @@ type TaskRowProps = {
   onToggle: (id: string, anchor: HTMLElement) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  onTogglePriority: (id: string) => void
 }
 
 function areaLabel(area: NonNullable<Task['area']>): string {
   return area.charAt(0).toUpperCase() + area.slice(1)
 }
 
-export function TaskRow({ task, today, onToggle, onEdit, onDelete }: TaskRowProps) {
+export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePriority }: TaskRowProps) {
   const [isFlashing, setIsFlashing] = useState(false)
   const surfaceRef = useRef<HTMLDivElement>(null)
 
@@ -29,6 +30,7 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete }: TaskRowProp
   }, [task.done])
 
   const overdue = !task.done && task.dueDate !== null && task.dueDate < today
+  const important = task.priority === 'important'
   const meta: string[] = []
   if (task.area !== null) meta.push(areaLabel(task.area))
   if (task.dueDate !== null) meta.push(task.dueDate)
@@ -65,7 +67,7 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete }: TaskRowProp
       </div>
       <div
         ref={surfaceRef}
-        className={`${task.done ? 'task-row task-row-done' : 'task-row'} ${isFlashing ? 'task-row-flash' : ''}`}
+        className={`${task.done ? 'task-row task-row-done' : 'task-row'}${important ? ' task-row-important' : ''} ${isFlashing ? 'task-row-flash' : ''}`}
         {...handlers}
       >
         <button
@@ -91,10 +93,51 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete }: TaskRowProp
           onClick={() => onEdit(task.id)}
         >
           <span className="task-title-text">{task.title}</span>
+          {important ? (
+            <span className="task-priority" aria-hidden="true">
+              ★ Important
+            </span>
+          ) : null}
           {overdue ? <span className="task-overdue">Overdue</span> : null}
           {meta.length > 0 ? (
             <span className="task-meta">{meta.join(' · ')}</span>
           ) : null}
+        </button>
+        <button
+          type="button"
+          className={
+            important
+              ? 'priority-toggle priority-toggle-active'
+              : 'priority-toggle'
+          }
+          aria-pressed={important}
+          aria-label={
+            important
+              ? `Mark "${task.title}" as normal priority`
+              : `Mark "${task.title}" as important`
+          }
+          title={important ? 'Important — select for normal' : 'Mark as important'}
+          onClick={(event) => {
+            event.stopPropagation()
+            onTogglePriority(task.id)
+          }}
+          onKeyDown={(event) => {
+            event.stopPropagation()
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill={important ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
         </button>
       </div>
     </li>
