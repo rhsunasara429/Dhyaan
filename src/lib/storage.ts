@@ -1,4 +1,4 @@
-import { isTask, normalizePriorityOrder } from './tasks.ts'
+import { clearIneligibleRanks, isTask, normalizePriorityOrder } from './tasks.ts'
 import type { Task } from './types.ts'
 
 export const STORAGE_KEY = 'dhyaan.tasks.v1'
@@ -21,7 +21,10 @@ function isLegacyImportant(value: unknown): boolean {
   return (value as Record<string, unknown>).priority === 'important'
 }
 
-export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
+export function loadTasks(
+  store: TaskStore | null = defaultStore(),
+  today?: string,
+): Task[] {
   if (store === null) return []
   let raw: string | null
   try {
@@ -85,7 +88,12 @@ export function loadTasks(store: TaskStore | null = defaultStore()): Task[] {
     seed.task.priorityOrder = ranked.length + index + 1
   })
 
-  return seeds.map((seed) => seed.task)
+  const loaded = seeds.map((seed) => seed.task)
+  // Priority lives only on Today work (Overdue + Due Today). When `today` is
+  // known, drop stale ranks from Inbox / Upcoming / done tasks so they can
+  // never resurface where the control is hidden.
+  if (today === undefined) return loaded
+  return clearIneligibleRanks(loaded, today)
 }
 
 export function saveTasks(

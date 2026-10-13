@@ -40,6 +40,14 @@
   --color-danger: #b91c1c;
   --color-danger-soft: rgba(185, 28, 28, 0.08);
   --color-warning: #d97706;
+  /* Todoist-style priority tiers: P1 red, P2 orange, P3 amber. Text shades
+     stay at 4.5:1+ against the surface; soft fills tint the pills. */
+  --color-p1: #b91c1c;
+  --color-p1-soft: rgba(185, 28, 28, 0.1);
+  --color-p2: #c2410c;
+  --color-p2-soft: rgba(194, 65, 12, 0.12);
+  --color-p3: #a16207;
+  --color-p3-soft: rgba(161, 98, 7, 0.14);
   --color-backdrop: rgba(31, 26, 20, 0.45);
   --color-shadow: rgba(31, 26, 20, 0.08);
 
@@ -108,6 +116,12 @@
   --color-danger: #f87171;
   --color-danger-soft: rgba(248, 113, 113, 0.12);
   --color-warning: #facc15;
+  --color-p1: #f87171;
+  --color-p1-soft: rgba(248, 113, 113, 0.14);
+  --color-p2: #fb923c;
+  --color-p2-soft: rgba(251, 146, 60, 0.16);
+  --color-p3: #facc15;
+  --color-p3-soft: rgba(250, 204, 21, 0.16);
   --color-backdrop: rgba(10, 8, 6, 0.6);
   --color-shadow: rgba(0, 0, 0, 0.35);
 }
@@ -211,6 +225,9 @@ body {
 .app-main {
   flex: 1;
   padding: var(--space-4) var(--space-3);
+  /* Clear the floating FAB (52px) + sticky tabbar so the last row can scroll
+     fully above both instead of sliding underneath them. */
+  padding-bottom: calc(52px + var(--tap-min) + var(--space-5) + env(safe-area-inset-bottom));
 }
 
 .tab-content {
@@ -434,6 +451,11 @@ textarea:focus-visible {
   background: var(--color-success);
 }
 
+.task-row-action-today {
+  justify-content: flex-start;
+  background: var(--color-accent);
+}
+
 .task-row-action-delete {
   justify-content: flex-end;
   background: var(--color-danger);
@@ -551,10 +573,12 @@ textarea:focus-visible {
   color: var(--color-text-secondary);
 }
 
-/* ---- Task priority: click-to-rank P1, P2, ... ----
+/* ---- Task priority: click-to-rank P1, P2, ... (Today only) ----
    Unranked rows show an outline star; ranked rows swap it for a compact P-number
-   pill so click order is visible at a glance. Accent color comes from theme
-   tokens so light/dark both work. */
+   pill so click order is visible at a glance. Ranks collapse onto three
+   Todoist-style tiers: P1 red, P2 orange, P3+ amber. The toggle only renders
+   in Overdue + Due Today (see TaskRow allowPriority); Inbox / Upcoming /
+   Completed never show it. */
 .priority-toggle {
   flex: none;
   width: 36px;
@@ -583,6 +607,28 @@ textarea:focus-visible {
   color: var(--color-accent);
 }
 
+.priority-toggle-p1 {
+  color: var(--color-p1);
+}
+.priority-toggle-p1:hover {
+  background: var(--color-p1-soft);
+  color: var(--color-p1);
+}
+.priority-toggle-p2 {
+  color: var(--color-p2);
+}
+.priority-toggle-p2:hover {
+  background: var(--color-p2-soft);
+  color: var(--color-p2);
+}
+.priority-toggle-p3 {
+  color: var(--color-p3);
+}
+.priority-toggle-p3:hover {
+  background: var(--color-p3-soft);
+  color: var(--color-p3);
+}
+
 .priority-rank {
   display: inline-flex;
   align-items: center;
@@ -599,6 +645,19 @@ textarea:focus-visible {
   letter-spacing: 0.02em;
 }
 
+.priority-rank-p1 {
+  background: var(--color-p1-soft);
+  color: var(--color-p1);
+}
+.priority-rank-p2 {
+  background: var(--color-p2-soft);
+  color: var(--color-p2);
+}
+.priority-rank-p3 {
+  background: var(--color-p3-soft);
+  color: var(--color-p3);
+}
+
 .task-priority {
   display: inline-flex;
   align-items: center;
@@ -611,8 +670,40 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.task-priority-p1 {
+  background: var(--color-p1-soft);
+  color: var(--color-p1);
+}
+.task-priority-p2 {
+  background: var(--color-p2-soft);
+  color: var(--color-p2);
+}
+.task-priority-p3 {
+  background: var(--color-p3-soft);
+  color: var(--color-p3);
+}
+
 .task-row-important {
   border-color: var(--color-accent);
+}
+
+.task-row-p1 {
+  border-color: var(--color-p1);
+}
+.task-row-p1:hover {
+  border-color: var(--color-p1);
+}
+.task-row-p2 {
+  border-color: var(--color-p2);
+}
+.task-row-p2:hover {
+  border-color: var(--color-p2);
+}
+.task-row-p3 {
+  border-color: var(--color-p3);
+}
+.task-row-p3:hover {
+  border-color: var(--color-p3);
 }
 
 .task-row-done .task-title-text {

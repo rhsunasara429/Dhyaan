@@ -8,6 +8,8 @@ import {
 } from './selectors.ts'
 import {
   buildTask,
+  canPrioritizeTask,
+  clearIneligibleRanks,
   deleteTask,
   isTask,
   renameTask,
@@ -209,7 +211,7 @@ describe('task priority order (click-to-rank)', () => {
     ])
   })
 
-  it('orders P1 before P2 before unranked in Upcoming', () => {
+  it('ignores rank in Upcoming (earliest date first, priority is Today-only)', () => {
     const unranked = makeTask('u', {
       dueDate: '2026-09-26',
       createdAt: 500,
@@ -225,10 +227,12 @@ describe('task priority order (click-to-rank)', () => {
       createdAt: 50,
       priorityOrder: 1,
     })
+    // Stale ranks (pre-migration storage) must not affect Upcoming order:
+    // earliest date first, newest ties first.
     expect(selectUpcoming([unranked, p2, p1], TODAY).map((t) => t.id)).toEqual([
-      'p1',
-      'p2',
       'u',
+      'p2',
+      'p1',
     ])
   })
 
@@ -355,5 +359,78 @@ describe('task priority order (click-to-rank)', () => {
     expect(deleteTask([task, makeTask('b')], 'a').map((t) => t.id)).toEqual([
       'b',
     ])
+  })
+
+  it('only allows priority on Overdue + Due Today (Today-only)', () => {
+    const inbox = makeTask('inbox', { dueDate: null })
+    const upcoming = makeTask('up', { dueDate: '2026-09-26' })
+    const dueToday = makeTask('today', { dueDate: TODAY })
+    const overdue = makeTask('over', { dueDate: '2026-09-20' })
+    const done = makeTask('done', { dueDate: TODAY, done: true })
+    expect(canPrioritizeTask(inbox, TODAY)).toBe(false)
+    expect(canPrioritizeTask(upcoming, TODAY)).toBe(false)
+    expect(canPrioritizeTask(done, TODAY)).toBe(false)
+    expect(canPrioritizeTask(dueToday, TODAY)).toBe(true)
+    expect(canPrioritizeTask(overdue, TODAY)).toBe(true)
+  })
+
+  it('rejects priority toggles for Inbox / Upcoming / done when today is known', () => {
+    const inbox = makeTask('inbox', { dueDate: null })
+    const upcoming = makeTask('up', { dueDate: '2026-09-26' })
+    const done = makeTask('done', { dueDate: TODAY, done: true })
+    const dueToday = makeTask('today', { dueDate: TODAY })
+    expect(togglePriorityOrder([inbox], 'inbox', TODAY)).toBeNull()
+    expect(togglePriorityOrder([upcoming], 'up', TODAY)).toBeNull()
+    expect(togglePriorityOrder([done], 'done', TODAY)).toBeNull()
+    const next = togglePriorityOrder([dueToday], 'today', TODAY)
+    expect(next?.find((t) => t.id === 'today')?.priorityOrder).toBe(1)
+  })
+
+  it('auto-clears priority when a task is moved to Inbox or Upcoming', () => {
+    const ranked = makeTask('a', { priorityOrder: 1, dueDate: TODAY })
+    const other = makeTask('b', { priorityOrder: 2, dueDate: TODAY })
+    const toInbox = updateTask(
+      [ranked, other],
+      'a',
+      { title: ranked.title, area: null, dueDate: null },
+      TODAY,
+    )
+    expect(toInbox?.find((t) => t.id === 'a')?.priorityOrder).toBeNull()
+    expect(toInbox?.find((t) => t.id === 'b')?.priorityOrder).toBe(1)
+    const toFuture = updateTask(
+      [ranked, other],
+      'a',
+      { title: ranked.title, area: null, dueDate: '2026-10-01' },
+      TODAY,
+    )
+    expect(toFuture?.find((t) => t.id === 'a')?.priorityOrder).toBeNull()
+    expect(toFuture?.find((t) => t.id === 'b')?.priorityOrder).toBe(1)
+  })
+
+  it('bulk-clears stale Inbox / Upcoming ranks and compacts survivors', () => {
+    const tasks = [
+      makeTask('inbox', { priorityOrder: 1, dueDate: null, createdAt: 10 }),
+      makeTask('up', { priorityOrder: 2, dueDate: '2026-09-26', createdAt: 20 }),
+      makeTask('t1', { priorityOrder: 3, dueDate: TODAY, createdAt: 30 }),
+      makeTask('t2', { priorityOrder: 4, dueDate: TODAY, createdAt: 40 }),
+    ]
+    const cleaned = clearIneligibleRanks(tasks, TODAY)
+    expect(cleaned.find((t) => t.id === 'inbox')?.priorityOrder).toBeNull()
+    expect(cleaned.find((t) => t.id === 'up')?.priorityOrder).toBeNull()
+    expect(cleaned.find((t) => t.id === 't1')?.priorityOrder).toBe(1)
+    expect(cleaned.find((t) => t.id === 't2')?.priorityOrder).toBe(2)
+  })
+
+  it('clears stale ranks on load when today is known', () => {
+    const stale = {
+      ...makeTask('inbox', { priorityOrder: 1, dueDate: null }),
+    }
+    const fresh = makeTask('today', { priorityOrder: 1, dueDate: TODAY })
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([stale, fresh]),
+    })
+    const loaded = loadTasks(store, TODAY)
+    expect(loaded.find((t) => t.id === 'inbox')?.priorityOrder).toBeNull()
+    expect(loaded.find((t) => t.id === 'today')?.priorityOrder).toBe(1)
   })
 })

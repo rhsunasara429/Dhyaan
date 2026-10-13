@@ -3,6 +3,7 @@ import {
   buildTask,
   deleteTask,
   MAX_TITLE_LENGTH,
+  moveTaskToToday,
   renameTask,
   toggleTask,
   updateTask,
@@ -295,6 +296,38 @@ describe('updateTask', () => {
       area: 'personal',
       dueDate: '2026-10-03',
     })
+    expect(tasks).toEqual(snapshot)
+  })
+})
+
+describe('moveTaskToToday (Inbox swipe)', () => {
+  const TODAY = '2026-09-25'
+
+  it('schedules an undated Inbox task for today, keeping other fields', () => {
+    const task = makeTask('a', { area: 'college', notes: 'keep' })
+    const next = moveTaskToToday([task], 'a', TODAY)
+    expect(next?.[0]).toEqual({ ...task, dueDate: TODAY })
+  })
+
+  it('leaves priority unranked so the user ranks it in Today', () => {
+    const task = makeTask('a', { priorityOrder: null })
+    expect(moveTaskToToday([task], 'a', TODAY)?.[0]?.priorityOrder).toBeNull()
+  })
+
+  it('rejects done tasks, dated tasks, unknown ids, and bad dates', () => {
+    const done = makeTask('d', { done: true })
+    const dated = makeTask('t', { dueDate: TODAY })
+    const inbox = makeTask('i')
+    expect(moveTaskToToday([done], 'd', TODAY)).toBeNull()
+    expect(moveTaskToToday([dated], 't', TODAY)).toBeNull()
+    expect(moveTaskToToday([inbox], 'missing', TODAY)).toBeNull()
+    expect(moveTaskToToday([inbox], 'i', 'tomorrow')).toBeNull()
+  })
+
+  it('does not mutate the input', () => {
+    const tasks = [makeTask('a')]
+    const snapshot = structuredClone(tasks)
+    moveTaskToToday(tasks, 'a', TODAY)
     expect(tasks).toEqual(snapshot)
   })
 })

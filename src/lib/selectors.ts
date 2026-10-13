@@ -52,14 +52,15 @@ export function selectDueToday(tasks: Task[], today: string): Task[] {
 }
 
 export function selectUpcoming(tasks: Task[], today: string): Task[] {
+  // Upcoming never carries priority (see canPrioritizeTask): earliest date
+  // first, newest ties first. Any stale rank in storage is ignored here and
+  // cleared on load / edit.
   return tasks
     .filter(
       (task) =>
         !task.done && task.dueDate !== null && task.dueDate > today,
     )
     .sort((a, b) => {
-      const rankOrder = comparePriorityOrder(a, b)
-      if (rankOrder !== 0) return rankOrder
       const dateOrder = (a.dueDate as string).localeCompare(b.dueDate as string)
       return dateOrder !== 0 ? dateOrder : b.createdAt - a.createdAt
     })

@@ -106,6 +106,16 @@ function validateTitle(title: unknown): string | null {
   return trimmed
 }
 
+/**
+ * Priority is only meaningful for Today work: open tasks due today or
+ * overdue (dueDate <= today). Inbox (undated), Upcoming (future), and
+ * completed tasks can never hold a rank — the UI hides the control there
+ * and edits/moves auto-clear it (see clearIneligibleRanks).
+ */
+export function canPrioritizeTask(task: Task, today: string): boolean {
+  return !task.done && task.dueDate !== null && task.dueDate <= today
+}
+
 function maxPriorityOrder(tasks: Task[]): number {
   let max = 0
   for (const task of tasks) {
@@ -114,6 +124,36 @@ function maxPriorityOrder(tasks: Task[]): number {
     }
   }
   return max
+}
+
+/**
+ * Clear ranks that are no longer eligible (Inbox / Upcoming / done) and
+ * compact the survivors to a contiguous P1..Pn sequence, preserving rank
+ * order. Returns a new array; the input is never mutated.
+ */
+export function clearIneligibleRanks(tasks: Task[], today: string): Task[] {
+  const eligible = tasks.filter(
+    (task) => task.priorityOrder !== null && canPrioritizeTask(task, today),
+  )
+  if (eligible.length === tasks.filter((t) => t.priorityOrder !== null).length) {
+    return tasks
+  }
+  const order = new Map<string, number>()
+  ;[...eligible]
+    .sort(
+      (a, b) =>
+        (a.priorityOrder as number) - (b.priorityOrder as number) ||
+        b.createdAt - a.createdAt,
+    )
+    .forEach((task, index) => {
+      order.set(task.id, index + 1)
+    })
+  return tasks.map((task) => {
+    if (task.priorityOrder === null) return task
+    if (!order.has(task.id)) return { ...task, priorityOrder: null }
+    const next = order.get(task.id) as number
+    return task.priorityOrder === next ? task : { ...task, priorityOrder: next }
+  })
 }
 
 export function toggleTask(
@@ -188,36 +228,79 @@ export function updateTask(
   tasks: Task[],
   id: string,
   patch: { title: unknown } & TaskOrganization,
+  today?: string,
 ): Task[] | null {
   const trimmed = validateTitle(patch.title)
   if (trimmed === null) return null
   if (patch.area !== null && !isArea(patch.area)) return null
   if (patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
   let found = false
+  let removedRank: number | null = null
   const next = tasks.map((task) => {
     if (task.id !== id) return task
     found = true
-    return {
+    const merged: Task = {
       ...task,
       title: trimmed,
       area: patch.area,
       dueDate: patch.dueDate,
     }
+    // Moving a task out of Today (Inbox / Upcoming) auto-clears its rank so
+    // a stale P-number can never linger where priority is not allowed.
+    if (
+      today !== undefined &&
+      task.priorityOrder !== null &&
+      !canPrioritizeTask(merged, today)
+    ) {
+      removedRank = task.priorityOrder
+      return { ...merged, priorityOrder: null }
+    }
+    return merged
   })
-  return found ? next : null
+  if (!found) return null
+  if (removedRank === null) return next
+  const rank = removedRank as number
+  return next.map((task) =>
+    task.priorityOrder !== null && task.priorityOrder > rank
+      ? { ...task, priorityOrder: task.priorityOrder - 1 }
+      : task,
+  )
+}
+
+/**
+ * Inbox right-swipe: schedule an undated, open task for today. Only Inbox
+ * tasks qualify (done or already-dated tasks are rejected with null) so the
+ * gesture can never steal the Complete/Reopen meaning in other sections.
+ * Priority stays null — the user ranks it in Today afterwards if wanted.
+ */
+export function moveTaskToToday(
+  tasks: Task[],
+  id: string,
+  today: string,
+): Task[] | null {
+  if (!isDueDate(today)) return null
+  const target = tasks.find((task) => task.id === id)
+  if (target === undefined) return null
+  if (target.done || target.dueDate !== null) return null
+  return tasks.map((task) =>
+    task.id === id ? { ...task, dueDate: today } : task,
+  )
 }
 
 /**
  * Star-click ranking: the first star click assigns P1, the next unranked star
  * click assigns P2, and so on. Re-clicking (starring) a ranked task clears it
- * and shifts higher ranks up.
+ * and shifts higher ranks up. When `today` is given, Inbox / Upcoming / done
+ * tasks are rejected (null) so priority can only be set on Today work.
  */
 export function togglePriorityOrder(
   tasks: Task[],
   id: string,
+  today?: string,
 ): Task[] | null {
   const target = tasks.find((task) => task.id === id)
   if (target === undefined) return null
+  if (today !== undefined && !canPrioritizeTask(target, today)) return null
   if (target.priorityOrder !== null) {
     const removedRank = target.priorityOrder
     return tasks.map((task) => {
@@ -231,7 +314,11 @@ export function togglePriorityOrder(
       return task
     })
   }
-  const nextRank = maxPriorityOrder(tasks) + 1
+  const pool =
+    today === undefined
+      ? tasks
+      : tasks.filter((task) => canPrioritizeTask(task, today))
+  const nextRank = maxPriorityOrder(pool) + 1
   return tasks.map((task) =>
     task.id === id ? { ...task, priorityOrder: nextRank } : task,
   )

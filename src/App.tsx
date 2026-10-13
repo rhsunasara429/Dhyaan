@@ -45,6 +45,7 @@ function App() {
     updateTaskById,
     deleteTaskById,
     toggleTaskPriorityById,
+    moveTaskToTodayById,
   } = useTasks()
   const { notes, addNote, updateNoteById, deleteNoteById } = useNotes()
   const today = todayLocal()
@@ -157,7 +158,8 @@ function App() {
                     onToggle={handleToggle}
                     onEdit={setEditingId}
                     onDelete={deleteTaskById}
-                    onTogglePriority={toggleTaskPriorityById}
+                    allowPriority={false}
+                    onMoveToToday={moveTaskToTodayById}
                   />
                 ))}
               </ul>
@@ -174,7 +176,7 @@ function App() {
                       onToggle={handleToggle}
                       onEdit={setEditingId}
                       onDelete={deleteTaskById}
-                      onTogglePriority={toggleTaskPriorityById}
+                      allowPriority={false}
                     />
                   ))}
                 </ul>
@@ -233,6 +235,7 @@ function App() {
                       onEdit={setEditingId}
                       onDelete={deleteTaskById}
                       onTogglePriority={toggleTaskPriorityById}
+                      allowPriority
                     />
                   ))}
                 </ul>
@@ -249,6 +252,7 @@ function App() {
                     onEdit={setEditingId}
                     onDelete={deleteTaskById}
                     onTogglePriority={toggleTaskPriorityById}
+                    allowPriority
                   />
                 ))}
               </ul>
@@ -273,7 +277,7 @@ function App() {
                         onToggle={handleToggle}
                         onEdit={setEditingId}
                         onDelete={deleteTaskById}
-                        onTogglePriority={toggleTaskPriorityById}
+                        allowPriority={false}
                       />
                     ))}
                   </ul>
