@@ -32,6 +32,8 @@ function makeTask(id: string, overrides: Partial<Task> = {}): Task {
     area: null,
     notes: null,
     priorityOrder: null,
+    repeat: null,
+    repeatGroupId: null,
     ...overrides,
   }
 }

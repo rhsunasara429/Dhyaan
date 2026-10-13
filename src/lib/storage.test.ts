@@ -27,6 +27,8 @@ function makeTask(id: string): Task {
     area: null,
     notes: null,
     priorityOrder: null,
+    repeat: null,
+    repeatGroupId: null,
   }
 }
 
@@ -153,5 +155,66 @@ describe('storage', () => {
       ]),
     })
     expect(loadTasks(store).map((task) => task.id)).toEqual(['good'])
+  })
+
+  /* --- Repeat migration: tasks stored before repeats existed carry no keys.
+     They must load as one-off, never dropped. --- */
+
+  it('loads pre-repeat tasks as one-off', () => {
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([legacyTask('old-a')]),
+    })
+    const loaded = loadTasks(store)
+    expect(loaded).toEqual([makeTask('old-a')])
+    expect(loaded[0]?.repeat).toBeNull()
+    expect(loaded[0]?.repeatGroupId).toBeNull()
+  })
+
+  it('falls back to one-off for invalid stored repeat values', () => {
+    for (const bad of ['monthly', 'everyday', 1, true, {}, []]) {
+      const raw = { ...makeTask('x'), repeat: bad, repeatGroupId: 'x' }
+      const { store } = fakeStore({
+        [STORAGE_KEY]: JSON.stringify([raw]),
+      })
+      const loaded = loadTasks(store)
+      expect(loaded).toHaveLength(1)
+      expect(loaded[0]?.repeat).toBeNull()
+      expect(loaded[0]?.repeatGroupId).toBeNull()
+    }
+  })
+
+  it('clears a stale group link on one-off tasks', () => {
+    const raw = { ...makeTask('x'), repeat: null, repeatGroupId: 'stale' }
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([raw]),
+    })
+    expect(loadTasks(store)[0]?.repeatGroupId).toBeNull()
+  })
+
+  it('adopts its own id when a repeat has no group', () => {
+    const raw = {
+      ...makeTask('chain'),
+      repeat: 'daily',
+      repeatGroupId: null,
+    } as Record<string, unknown>
+    delete raw.repeatGroupId
+    const { store } = fakeStore({
+      [STORAGE_KEY]: JSON.stringify([raw]),
+    })
+    const loaded = loadTasks(store)
+    expect(loaded[0]?.repeat).toBe('daily')
+    expect(loaded[0]?.repeatGroupId).toBe('chain')
+  })
+
+  it('round-trips a repeat chain', () => {
+    const { store } = fakeStore()
+    const task = {
+      ...makeTask('a'),
+      dueDate: '2026-10-13',
+      repeat: 'weekly' as const,
+      repeatGroupId: 'a',
+    }
+    saveTasks([task], store)
+    expect(loadTasks(store)).toEqual([task])
   })
 })

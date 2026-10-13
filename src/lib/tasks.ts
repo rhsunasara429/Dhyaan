@@ -1,4 +1,5 @@
-import type { Area, Task } from './types.ts'
+import { addDaysLocal } from './dates.ts'
+import type { Area, Repeat, Task } from './types.ts'
 
 export const MAX_TITLE_LENGTH = 200
 
@@ -9,6 +10,8 @@ export const AREAS: readonly Area[] = [
   'personal',
   'ideas',
 ]
+
+export const REPEATS: readonly Repeat[] = ['daily', 'weekly']
 
 const DUE_DATE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 
@@ -33,6 +36,21 @@ export function isPriorityOrder(value: unknown): value is number {
 
 export function normalizePriorityOrder(value: unknown): number | null {
   return isPriorityOrder(value) ? value : null
+}
+
+export function isRepeat(value: unknown): value is Repeat {
+  return (
+    value === 'daily' ||
+    value === 'weekly'
+  )
+}
+
+export function normalizeRepeat(value: unknown): Repeat | null {
+  return isRepeat(value) ? value : null
+}
+
+export function normalizeRepeatGroupId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null
 }
 
 function isDoneAt(value: unknown): boolean {
@@ -61,21 +79,24 @@ export function isTask(value: unknown): value is Task {
     (t.dueDate === null || isDueDate(t.dueDate)) &&
     (t.area === null || isArea(t.area)) &&
     (t.notes === null || typeof t.notes === 'string')
-    // priorityOrder is intentionally not validated here: tasks stored before
-    // the field existed carry no key, and invalid values must fall back to
-    // null in storage.loadTasks instead of dropping the task. Same for the
-    // legacy `priority` ('important' | 'normal') string.
+    // priorityOrder, repeat, and repeatGroupId are intentionally not
+    // validated here: tasks stored before the fields existed carry no key,
+    // and invalid values must fall back (null / one-off) in
+    // storage.loadTasks instead of dropping the task. Same for the legacy
+    // `priority` ('important' | 'normal') string.
   )
 }
 
 export type TaskInit = {
   area?: Area | null
   dueDate?: string | null
+  repeat?: Repeat | null
 }
 
 export type TaskOrganization = {
   area: Area | null
   dueDate: string | null
+  repeat: Repeat | null
 }
 
 export function buildTask(title: unknown, init?: TaskInit): Task | null {
@@ -84,10 +105,13 @@ export function buildTask(title: unknown, init?: TaskInit): Task | null {
   if (trimmed.length === 0 || trimmed.length > MAX_TITLE_LENGTH) return null
   const area = init?.area ?? null
   const dueDate = init?.dueDate ?? null
+  const repeat = init?.repeat ?? null
   if (area !== null && !isArea(area)) return null
   if (dueDate !== null && !isDueDate(dueDate)) return null
+  if (repeat !== null && !isRepeat(repeat)) return null
+  const id = crypto.randomUUID()
   return {
-    id: crypto.randomUUID(),
+    id,
     title: trimmed,
     done: false,
     doneAt: null,
@@ -96,6 +120,9 @@ export function buildTask(title: unknown, init?: TaskInit): Task | null {
     area,
     notes: null,
     priorityOrder: null,
+    repeat,
+    // A new repeating task starts its own chain; spawns inherit this id.
+    repeatGroupId: repeat !== null ? id : null,
   }
 }
 
@@ -227,23 +254,54 @@ export function deleteTask(tasks: Task[], id: string): Task[] {
 export function updateTask(
   tasks: Task[],
   id: string,
-  patch: { title: unknown } & TaskOrganization,
+  patch: { title: unknown; area?: Area | null; dueDate?: string | null; repeat?: Repeat | null } & Partial<TaskOrganization>,
   today?: string,
 ): Task[] | null {
   const trimmed = validateTitle(patch.title)
   if (trimmed === null) return null
-  if (patch.area !== null && !isArea(patch.area)) return null
-  if (patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
+  // area / dueDate / repeat are optional for backward compatibility:
+  // omitted means "keep existing". Explicit null clears.
+  const patchHasArea = patch.area !== undefined
+  const patchHasDue = patch.dueDate !== undefined
+  const patchHasRepeat = patch.repeat !== undefined
+  if (patchHasArea && patch.area !== null && !isArea(patch.area)) return null
+  if (patchHasDue && patch.dueDate !== null && !isDueDate(patch.dueDate)) return null
+  if (patchHasRepeat && patch.repeat !== null && !isRepeat(patch.repeat)) return null
   let found = false
   let removedRank: number | null = null
   const next = tasks.map((task) => {
     if (task.id !== id) return task
     found = true
+    const nextArea = patchHasArea ? (patch.area as Area | null) : task.area
+    let nextDue = patchHasDue ? (patch.dueDate as string | null) : task.dueDate
+    let nextRepeat: Repeat | null = patchHasRepeat
+      ? (patch.repeat as Repeat | null)
+      : (task.repeat ?? null)
+    let nextGroup: string | null = task.repeatGroupId ?? null
+    if (patchHasRepeat) {
+      if (nextRepeat === null) {
+        // Turning repeat off breaks the chain link.
+        nextGroup = null
+      } else if (nextGroup === null) {
+        // Turning repeat on for an old one-off starts a new chain.
+        nextGroup = task.id
+      }
+    } else if (nextRepeat !== null && nextGroup === null) {
+      // Heal legacy rows that carry a repeat but no group.
+      nextGroup = task.id
+    }
+    // A repeating task is meaningless without a date (it would sit in Inbox
+    // forever). Default it to today when the caller knows today.
+    if (nextRepeat !== null && nextDue === null && today !== undefined) {
+      nextDue = today
+    }
     const merged: Task = {
       ...task,
       title: trimmed,
-      area: patch.area,
-      dueDate: patch.dueDate,
+      area: nextArea,
+      dueDate: nextDue,
+      repeat: nextRepeat,
+      repeatGroupId: nextGroup,
     }
     // Moving a task out of Today (Inbox / Upcoming) auto-clears its rank so
     // a stale P-number can never linger where priority is not allowed.
@@ -322,4 +380,119 @@ export function togglePriorityOrder(
   return tasks.map((task) =>
     task.id === id ? { ...task, priorityOrder: nextRank } : task,
   )
+}
+
+/* ---- Repeats: daily + weekly (self-replicating chains) ----
+   Completing a repeating task never resets it — history (doneAt, streaks,
+   daily progress) stays on the done instance and a fresh open instance is
+   spawned for the next date. Generation happens only on completion, so no
+   background job or alarm is needed (localStorage-only, like the M7
+   reminder catch-up): missed tasks simply wait as Overdue. */
+
+function repeatStepDays(repeat: Repeat): number {
+  return repeat === 'daily' ? 1 : 7
+}
+
+/**
+ * Next due date strictly after `today`, rolling forward from `fromDueDate`.
+ * Weekly keeps its weekday (due + 7k); daily lands on tomorrow. An undated
+ * or invalid start is treated as today, so the result is still > today.
+ */
+export function nextRepeatDueDate(
+  fromDueDate: string | null,
+  repeat: Repeat,
+  today: string,
+): string {
+  const step = repeatStepDays(repeat)
+  let cursor =
+    fromDueDate !== null && isDueDate(fromDueDate) ? fromDueDate : today
+  // Bound the loop: even a year of missed dailies converges in < 370 steps.
+  for (let i = 0; i < 1000; i++) {
+    cursor = addDaysLocal(cursor, step)
+    if (cursor > today) return cursor
+  }
+  return addDaysLocal(today, step)
+}
+
+/** A chain is identified by its group's id. Spawns inherit it. */
+export function repeatChainId(task: Task): string | null {
+  if ((task.repeat ?? null) === null) return null
+  return task.repeatGroupId ?? task.id
+}
+
+/**
+ * True when another open instance of the same chain already covers today or
+ * the future. Completing an overdue instance must not duplicate it.
+ */
+export function hasOpenRepeatInstance(
+  tasks: Task[],
+  groupId: string,
+  excludeId: string,
+  today?: string,
+): boolean {
+  return tasks.some((task) => {
+    if (task.id === excludeId) return false
+    if (task.done) return false
+    if ((task.repeat ?? null) === null) return false
+    if ((task.repeatGroupId ?? task.id) !== groupId) return false
+    if (today !== undefined && task.dueDate !== null && task.dueDate < today) {
+      return false
+    }
+    return true
+  })
+}
+
+/**
+ * Build the next open instance for a just-completed repeating task.
+ * Returns null for one-off tasks. Copies title / area / notes / repeat,
+ * clears done / rank, and dates it strictly after `today`.
+ */
+export function buildNextRepeatInstance(
+  completed: Task,
+  today: string,
+  now: number = Date.now(),
+): Task | null {
+  const repeat = completed.repeat ?? null
+  if (repeat === null) return null
+  if (!isDueDate(today)) return null
+  const groupId = completed.repeatGroupId ?? completed.id
+  return {
+    id: crypto.randomUUID(),
+    title: completed.title,
+    done: false,
+    doneAt: null,
+    createdAt: now,
+    dueDate: nextRepeatDueDate(completed.dueDate, repeat, today),
+    area: completed.area,
+    notes: completed.notes,
+    priorityOrder: null,
+    repeat,
+    repeatGroupId: groupId,
+  }
+}
+
+/**
+ * Toggle + repeat-spawn in one atomic step so the UI (and StrictMode
+ * double-invoke) can never create two spawns for one completion. Reopening
+ * never spawns; completing a repeat spawns only when no open instance of
+ * the same chain already covers today-or-later.
+ */
+export function toggleTaskWithRepeat(
+  tasks: Task[],
+  id: string,
+  today: string,
+  now: number = Date.now(),
+): Task[] {
+  const target = tasks.find((task) => task.id === id)
+  if (target === undefined) return tasks
+  const completing = !target.done
+  const toggled = toggleTask(tasks, id, now)
+  if (!completing) return toggled
+  if ((target.repeat ?? null) === null) return toggled
+  if (!isDueDate(today)) return toggled
+  const groupId = target.repeatGroupId ?? target.id
+  if (hasOpenRepeatInstance(toggled, groupId, id, today)) return toggled
+  const next = buildNextRepeatInstance(target, today, now)
+  if (next === null) return toggled
+  return [next, ...toggled]
 }

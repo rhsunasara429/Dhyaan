@@ -52,6 +52,7 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
   // A stale rank (pre-migration storage) never shows where priority is off.
   const ranked = allowPriority && rank !== null
   const tier = ranked ? priorityTier(rank as number) : null
+  const repeat = task.repeat ?? null
   const meta: string[] = []
   if (task.area !== null) meta.push(areaLabel(task.area))
   if (task.dueDate !== null) meta.push(task.dueDate)
@@ -144,6 +145,11 @@ export function TaskRow({ task, today, onToggle, onEdit, onDelete, onTogglePrior
             </span>
           ) : null}
           {overdue ? <span className="task-overdue">Overdue</span> : null}
+          {repeat !== null ? (
+            <span className="task-repeat" title={repeat === 'daily' ? 'Repeats daily' : 'Repeats weekly'}>
+              ↻ {repeat === 'daily' ? 'Daily' : 'Weekly'}
+            </span>
+          ) : null}
           {meta.length > 0 ? (
             <span className="task-meta">{meta.join(' · ')}</span>
           ) : null}

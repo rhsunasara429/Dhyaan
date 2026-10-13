@@ -6,6 +6,7 @@ export type EditInput = {
   title: string
   area: Task['area']
   dueDate: Task['dueDate']
+  repeat: Task['repeat']
 }
 
 type EditSheetProps = {
@@ -19,6 +20,7 @@ export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
   const [title, setTitle] = useState(task.title)
   const [area, setArea] = useState<Task['area']>(task.area)
   const [dueDate, setDueDate] = useState<Task['dueDate']>(task.dueDate)
+  const [repeat, setRepeat] = useState<Task['repeat']>(task.repeat ?? null)
   const [showHint, setShowHint] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -31,12 +33,13 @@ export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
     if (
       title.trim() === task.title &&
       area === task.area &&
-      dueDate === task.dueDate
+      dueDate === task.dueDate &&
+      repeat === (task.repeat ?? null)
     ) {
       onClose()
       return
     }
-    const ok = onSave(task.id, { title, area, dueDate })
+    const ok = onSave(task.id, { title, area, dueDate, repeat })
     if (ok) {
       onClose()
     } else {
@@ -113,8 +116,10 @@ export function EditSheet({ task, onSave, onDelete, onClose }: EditSheetProps) {
             <OrganizeFields
               area={area}
               dueDate={dueDate}
+              repeat={repeat}
               onAreaChange={setArea}
               onDueDateChange={setDueDate}
+              onRepeatChange={setRepeat}
             />
             <div className="sheet-actions">
               <button type="button" className="sheet-cancel" onClick={onClose}>

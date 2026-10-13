@@ -5,7 +5,7 @@ import { OrganizeFields } from './OrganizeFields.tsx'
 type CaptureSheetProps = {
   onSave: (
     title: string,
-    init: { area: Task['area']; dueDate: Task['dueDate'] },
+    init: { area: Task['area']; dueDate: Task['dueDate']; repeat: Task['repeat'] },
   ) => boolean
   onClose: () => void
 }
@@ -14,6 +14,7 @@ export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
   const [title, setTitle] = useState('')
   const [area, setArea] = useState<Task['area']>(null)
   const [dueDate, setDueDate] = useState<Task['dueDate']>(null)
+  const [repeat, setRepeat] = useState<Task['repeat']>(null)
   const [showHint, setShowHint] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -22,11 +23,12 @@ export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
   }, [])
 
   function submit() {
-    const ok = onSave(title, { area, dueDate })
+    const ok = onSave(title, { area, dueDate, repeat })
     if (ok) {
       setTitle('')
       setArea(null)
       setDueDate(null)
+      setRepeat(null)
       setShowHint(false)
       onClose()
     } else {
@@ -76,8 +78,10 @@ export function CaptureSheet({ onSave, onClose }: CaptureSheetProps) {
           <OrganizeFields
             area={area}
             dueDate={dueDate}
+            repeat={repeat}
             onAreaChange={setArea}
             onDueDateChange={setDueDate}
+            onRepeatChange={setRepeat}
           />
           <div className="sheet-actions">
             <button type="button" className="sheet-cancel" onClick={onClose}>

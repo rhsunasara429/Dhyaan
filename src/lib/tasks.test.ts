@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildNextRepeatInstance,
   buildTask,
   deleteTask,
+  hasOpenRepeatInstance,
+  isRepeat,
   MAX_TITLE_LENGTH,
   moveTaskToToday,
+  nextRepeatDueDate,
   renameTask,
   toggleTask,
+  toggleTaskWithRepeat,
   updateTask,
 } from './tasks.ts'
 import type { Task } from './types.ts'
@@ -21,6 +26,8 @@ function makeTask(id: string, overrides: Partial<Task> = {}): Task {
     area: null,
     notes: null,
     priorityOrder: null,
+    repeat: null,
+    repeatGroupId: null,
     ...overrides,
   }
 }
@@ -329,5 +336,166 @@ describe('moveTaskToToday (Inbox swipe)', () => {
     const snapshot = structuredClone(tasks)
     moveTaskToToday(tasks, 'a', TODAY)
     expect(tasks).toEqual(snapshot)
+  })
+})
+
+describe('repeats (daily + weekly)', () => {
+  const TODAY = '2026-10-13'
+
+  it('validates repeat values', () => {
+    expect(isRepeat('daily')).toBe(true)
+    expect(isRepeat('weekly')).toBe(true)
+    expect(isRepeat(null)).toBe(false)
+    expect(isRepeat('monthly')).toBe(false)
+    expect(isRepeat(undefined)).toBe(false)
+  })
+
+  it('defaults new tasks to one-off with no chain', () => {
+    expect(buildTask('Study physics')?.repeat).toBeNull()
+    expect(buildTask('Study physics')?.repeatGroupId).toBeNull()
+  })
+
+  it('starts a new chain when built with a repeat', () => {
+    const task = buildTask('Gym', { dueDate: TODAY, repeat: 'daily' })
+    expect(task?.repeat).toBe('daily')
+    expect(task?.repeatGroupId).toBe(task?.id)
+  })
+
+  it('rejects invalid repeat values', () => {
+    expect(
+      buildTask('Study', { dueDate: TODAY, repeat: 'monthly' as never }),
+    ).toBeNull()
+  })
+
+  it('computes tomorrow for an on-time daily', () => {
+    expect(nextRepeatDueDate(TODAY, 'daily', TODAY)).toBe('2026-10-14')
+  })
+
+  it('computes same weekday next week for an on-time weekly', () => {
+    expect(nextRepeatDueDate(TODAY, 'weekly', TODAY)).toBe('2026-10-20')
+  })
+
+  it('rolls a missed daily forward to tomorrow, not into the past', () => {
+    expect(nextRepeatDueDate('2026-10-10', 'daily', TODAY)).toBe('2026-10-14')
+  })
+
+  it('keeps the weekday when a weekly was missed', () => {
+    // Due Monday Oct 6, today Monday Oct 13 -> next Monday Oct 20.
+    expect(nextRepeatDueDate('2026-10-06', 'weekly', TODAY)).toBe('2026-10-20')
+  })
+
+  it('builds the next instance copying content but clearing done and rank', () => {
+    const completed = makeTask('a', {
+      title: 'Read 10 pages',
+      area: 'learning',
+      notes: 'keep',
+      dueDate: TODAY,
+      repeat: 'daily',
+      repeatGroupId: 'a',
+      priorityOrder: 1,
+    })
+    const next = buildNextRepeatInstance(completed, TODAY, 999)
+    expect(next).not.toBeNull()
+    expect(next?.title).toBe('Read 10 pages')
+    expect(next?.area).toBe('learning')
+    expect(next?.notes).toBe('keep')
+    expect(next?.repeat).toBe('daily')
+    expect(next?.repeatGroupId).toBe('a')
+    expect(next?.done).toBe(false)
+    expect(next?.doneAt).toBeNull()
+    expect(next?.priorityOrder).toBeNull()
+    expect(next?.dueDate).toBe('2026-10-14')
+    expect(next?.id).not.toBe('a')
+  })
+
+  it('returns null for one-off tasks', () => {
+    expect(buildNextRepeatInstance(makeTask('a'), TODAY)).toBeNull()
+  })
+
+  it('spawns tomorrow on completing a daily', () => {
+    const task = makeTask('a', {
+      dueDate: TODAY,
+      repeat: 'daily',
+      repeatGroupId: 'a',
+    })
+    const next = toggleTaskWithRepeat([task], 'a', TODAY, 555)
+    expect(next).toHaveLength(2)
+    const done = next.find((t) => t.id === 'a')
+    const spawn = next.find((t) => t.id !== 'a')
+    expect(done?.done).toBe(true)
+    expect(spawn?.done).toBe(false)
+    expect(spawn?.dueDate).toBe('2026-10-14')
+    expect(spawn?.repeat).toBe('daily')
+    expect(spawn?.repeatGroupId).toBe('a')
+  })
+
+  it('does not spawn when reopening a repeat', () => {
+    const task = makeTask('a', {
+      done: true,
+      doneAt: 1,
+      dueDate: TODAY,
+      repeat: 'daily',
+      repeatGroupId: 'a',
+    })
+    const next = toggleTaskWithRepeat([task], 'a', TODAY, 555)
+    expect(next).toHaveLength(1)
+    expect(next[0]?.done).toBe(false)
+  })
+
+  it('does not duplicate when today already has an open instance', () => {
+    const overdue = makeTask('old', {
+      dueDate: '2026-10-10',
+      repeat: 'daily',
+      repeatGroupId: 'g',
+    })
+    const todayOpen = makeTask('today', {
+      dueDate: TODAY,
+      repeat: 'daily',
+      repeatGroupId: 'g',
+    })
+    expect(hasOpenRepeatInstance([overdue, todayOpen], 'g', 'old', TODAY)).toBe(
+      true,
+    )
+    const next = toggleTaskWithRepeat([overdue, todayOpen], 'old', TODAY, 555)
+    // Overdue marked done, no third instance created.
+    expect(next).toHaveLength(2)
+    expect(next.find((t) => t.id === 'old')?.done).toBe(true)
+  })
+
+  it('turning repeat on starts a chain; turning it off breaks the link', () => {
+    const oneOff = makeTask('a', { dueDate: TODAY })
+    const on = updateTask([oneOff], 'a', {
+      title: oneOff.title,
+      area: null,
+      dueDate: TODAY,
+      repeat: 'weekly',
+    })
+    expect(on?.[0]?.repeat).toBe('weekly')
+    expect(on?.[0]?.repeatGroupId).toBe('a')
+    const off = updateTask(on ?? [], 'a', {
+      title: oneOff.title,
+      area: null,
+      dueDate: TODAY,
+      repeat: null,
+    })
+    expect(off?.[0]?.repeat).toBeNull()
+    expect(off?.[0]?.repeatGroupId).toBeNull()
+  })
+
+  it('defaults an undated repeat to today on edit', () => {
+    const inbox = makeTask('a', { dueDate: null })
+    const next = updateTask(
+      [inbox],
+      'a',
+      { title: inbox.title, area: null, dueDate: null, repeat: 'daily' },
+      TODAY,
+    )
+    expect(next?.[0]?.dueDate).toBe(TODAY)
+    expect(next?.[0]?.repeat).toBe('daily')
+  })
+
+  it('leaves one-off tasks untouched on toggle', () => {
+    const tasks = [makeTask('a', { dueDate: TODAY })]
+    expect(toggleTaskWithRepeat(tasks, 'a', TODAY, 1)).toHaveLength(1)
   })
 })

@@ -1,4 +1,4 @@
-import { clearIneligibleRanks, isTask, normalizePriorityOrder } from './tasks.ts'
+import { clearIneligibleRanks, isTask, normalizePriorityOrder, normalizeRepeat, normalizeRepeatGroupId } from './tasks.ts'
 import type { Task } from './types.ts'
 
 export const STORAGE_KEY = 'dhyaan.tasks.v1'
@@ -54,11 +54,26 @@ export function loadTasks(
     const record = entry as Record<string, unknown>
     const { priority: _legacy, ...rest } = record
     const base = rest as unknown as Task
+    // Forward-compatible repeat migration: tasks stored before repeats
+    // existed carry no keys (isTask tolerates the absence). Invalid values
+    // fall back to one-off instead of dropping the task — same rule as
+    // priorityOrder. A repeat without a group adopts its own id as the
+    // chain; a one-off never keeps a stale group link.
+    const repeat = normalizeRepeat(record.repeat)
+    let repeatGroupId = normalizeRepeatGroupId(record.repeatGroupId)
+    if (repeat === null) {
+      repeatGroupId = null
+    } else if (repeatGroupId === null) {
+      const id = typeof base.id === 'string' ? base.id : null
+      repeatGroupId = id
+    }
     seeds.push({
       task: {
         ...base,
         doneAt: base.doneAt ?? null,
         priorityOrder: normalizePriorityOrder(record.priorityOrder),
+        repeat,
+        repeatGroupId,
       },
       legacyImportant: isLegacyImportant(entry),
     })

@@ -8,7 +8,7 @@ import {
   moveTaskToToday,
   renameTask,
   togglePriorityOrder,
-  toggleTask,
+  toggleTaskWithRepeat,
   updateTask,
 } from '../lib/tasks.ts'
 import type { Task } from '../lib/types.ts'
@@ -36,16 +36,23 @@ export function useTasks() {
 
   function addTask(
     title: string,
-    init?: { area?: Task['area']; dueDate?: Task['dueDate'] },
+    init?: { area?: Task['area']; dueDate?: Task['dueDate']; repeat?: Task['repeat'] },
   ): boolean {
-    const task = buildTask(title, init)
+    const today = todayLocal()
+    // A repeating task needs a date to ever reach Today; default an undated
+    // repeat to today so it does not strand in the Inbox.
+    const dueDate =
+      init?.repeat != null && init?.dueDate == null ? today : init?.dueDate
+    const task = buildTask(title, { ...init, dueDate })
     if (task === null) return false
     commit([task, ...tasksRef.current])
     return true
   }
 
   function toggleTaskById(id: string): void {
-    commit(toggleTask(tasksRef.current, id))
+    // Toggle + spawn is atomic (see toggleTaskWithRepeat) so one completion
+    // can never create two next-instances, even under StrictMode remounts.
+    commit(toggleTaskWithRepeat(tasksRef.current, id, todayLocal()))
   }
 
   function renameTaskById(id: string, title: string): boolean {
@@ -61,6 +68,7 @@ export function useTasks() {
       title: string
       area: Task['area']
       dueDate: Task['dueDate']
+      repeat: Task['repeat']
     },
   ): boolean {
     const next = updateTask(tasksRef.current, id, patch, todayLocal())
