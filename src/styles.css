@@ -311,6 +311,9 @@ body {
   background: var(--color-surface);
   position: sticky;
   bottom: 0;
+  /* Rows carry z-index 1 for the swipe surface; without this the scrolling
+     list paints over the navbar instead of sliding underneath it. */
+  z-index: 6;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
