@@ -1,18 +1,19 @@
 import { useRef } from 'react'
 import type { Note } from '../lib/types.ts'
+import { noteTitle } from '../lib/notes.ts'
 import { useSwipe } from '../hooks/useSwipe.ts'
 import { celebrateFeedback } from '../lib/feedback.ts'
 
 type NoteRowProps = {
   note: Note
-  onEdit: (id: string) => void
+  onOpen: (id: string) => void
   onDelete: (id: string) => void
 }
 
-export function NoteRow({ note, onEdit, onDelete }: NoteRowProps) {
-  const created = new Date(note.createdAt).toLocaleString(undefined, {
+export function NoteRow({ note, onOpen, onDelete }: NoteRowProps) {
+  const title = noteTitle(note.content)
+  const created = new Date(note.createdAt).toLocaleDateString(undefined, {
     dateStyle: 'medium',
-    timeStyle: 'short',
   })
   const surfaceRef = useRef<HTMLDivElement>(null)
 
@@ -39,14 +40,13 @@ export function NoteRow({ note, onEdit, onDelete }: NoteRowProps) {
         <button
           type="button"
           className="note-body"
-          aria-label={`Edit note: ${note.content.slice(0, 80)}`}
-          onClick={() => onEdit(note.id)}
+          aria-label={`Open note: ${title}`}
+          onClick={() => onOpen(note.id)}
         >
-          <span className="note-content">{note.content}</span>
+          <span className="note-title">{title}</span>
           <span className="note-meta">{created}</span>
         </button>
       </div>
     </li>
   )
 }
-

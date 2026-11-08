@@ -81,6 +81,27 @@ describe('note storage', () => {
     expect(raw()).toBeUndefined()
   })
 
+  it('loads notes stored before titles were shown completely unchanged', () => {
+    const legacyNotes: Note[] = [
+      {
+        id: 'legacy-1',
+        content: 'First line becomes the title\nAnd the rest stays the body.',
+        createdAt: 1_700_000_000_000,
+        updatedAt: 1_700_000_000_000,
+      },
+      {
+        id: 'legacy-2',
+        content: 'Single-line note',
+        createdAt: 1_600_000_000_000,
+        updatedAt: 1_650_000_000_000,
+      },
+    ]
+    const { store } = fakeStore({
+      [NOTES_STORAGE_KEY]: JSON.stringify(legacyNotes),
+    })
+    expect(loadNotes(store)).toEqual(legacyNotes)
+  })
+
   it('persists an edited note across a reload', () => {
     const { store } = fakeStore()
     saveNotes([{ ...makeNote('a'), content: 'edited', updatedAt: 2 }], store)

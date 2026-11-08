@@ -53,3 +53,16 @@ export function deleteNote(notes: Note[], id: string): Note[] {
 export function selectNotesNewestFirst(notes: Note[]): Note[] {
   return [...notes].sort((a, b) => b.createdAt - a.createdAt)
 }
+
+/**
+ * A note's title is its first non-empty line. Notes captured before titles
+ * were surfaced in the list already have this line as their opening text, so
+ * no stored field or migration is needed.
+ */
+export function noteTitle(content: string): string {
+  const firstLine = content
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0)
+  return firstLine ?? content.trim()
+}

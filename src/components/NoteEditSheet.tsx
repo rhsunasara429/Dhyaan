@@ -24,6 +24,7 @@ export function NoteEditSheet({
   }, [])
 
   function submit() {
+    if (confirmingDelete) return
     if (content.trim() === note.content) {
       onClose()
       return
@@ -42,22 +43,48 @@ export function NoteEditSheet({
   }
 
   return (
-    <div
-      className="sheet-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose()
+    <form
+      className="note-editor"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit note"
+      onSubmit={(event) => {
+        event.preventDefault()
+        submit()
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape') return
+        if (confirmingDelete) {
+          setConfirmingDelete(false)
+        } else {
+          onClose()
+        }
       }}
     >
-      <div
-        className="sheet"
-        role="dialog"
-        aria-label="Edit note"
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') onClose()
-        }}
-      >
+      <div className="note-editor-panel">
+        <header className="note-editor-header">
+          <button
+            type="button"
+            className="note-viewer-icon"
+            aria-label="Cancel editing"
+            onClick={onClose}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h2 className="note-editor-heading">Edit note</h2>
+          <button
+            type="submit"
+            className="note-editor-save"
+            disabled={confirmingDelete}
+          >
+            Save
+          </button>
+        </header>
         {confirmingDelete ? (
-          <div>
+          <div className="note-editor-confirm">
             <p className="sheet-confirm-text">
               Delete this note? This cannot be undone.
             </p>
@@ -79,15 +106,10 @@ export function NoteEditSheet({
             </div>
           </div>
         ) : (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              submit()
-            }}
-          >
+          <div className="note-editor-body">
             <textarea
               ref={inputRef}
-              className="sheet-textarea"
+              className="note-editor-textarea"
               aria-label="Note content"
               autoComplete="off"
               value={content}
@@ -101,24 +123,16 @@ export function NoteEditSheet({
                 Type a note first.
               </p>
             ) : null}
-            <div className="sheet-actions">
-              <button type="button" className="sheet-cancel" onClick={onClose}>
-                Cancel
-              </button>
-              <button type="submit" className="sheet-save">
-                Save
-              </button>
-            </div>
             <button
               type="button"
-              className="sheet-delete-zone"
+              className="sheet-delete-zone note-editor-delete"
               onClick={() => setConfirmingDelete(true)}
             >
               Delete note
             </button>
-          </form>
+          </div>
         )}
       </div>
-    </div>
+    </form>
   )
 }

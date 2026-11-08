@@ -3,6 +3,7 @@ import {
   buildNote,
   deleteNote,
   isNote,
+  noteTitle,
   selectNotesNewestFirst,
   updateNote,
 } from './notes.ts'
@@ -56,6 +57,28 @@ describe('buildNote', () => {
     const a = buildNote('one')
     const b = buildNote('two')
     expect(a?.id).not.toBe(b?.id)
+  })
+})
+
+describe('noteTitle', () => {
+  it('uses the first line of a multi-line note', () => {
+    expect(noteTitle('Grocery list\nmilk\neggs')).toBe('Grocery list')
+  })
+
+  it('returns a single-line note unchanged', () => {
+    expect(noteTitle('Room 204, second floor')).toBe('Room 204, second floor')
+  })
+
+  it('trims surrounding whitespace from the title line', () => {
+    expect(noteTitle('   Pinned idea   \nrest of note')).toBe('Pinned idea')
+  })
+
+  it('skips leading blank lines', () => {
+    expect(noteTitle('\n\n  First real line\nbody')).toBe('First real line')
+  })
+
+  it('falls back to the trimmed content when every line is blank', () => {
+    expect(noteTitle('   ')).toBe('')
   })
 })
 

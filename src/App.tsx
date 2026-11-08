@@ -7,6 +7,7 @@ import { EmptyState } from './components/EmptyState.tsx'
 import { NoteEditSheet } from './components/NoteEditSheet.tsx'
 import { NoteRow } from './components/NoteRow.tsx'
 import { NoteSheet } from './components/NoteSheet.tsx'
+import { NoteView } from './components/NoteView.tsx'
 import { ReminderBanner } from './components/ReminderBanner.tsx'
 import { TaskRow } from './components/TaskRow.tsx'
 import { todayLocal, formatLongDate, greetingForHour } from './lib/dates.ts'
@@ -36,6 +37,7 @@ function App() {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [noteCaptureOpen, setNoteCaptureOpen] = useState(false)
+  const [viewingNoteId, setViewingNoteId] = useState<string | null>(null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [upcomingOpen, setUpcomingOpen] = useState(false)
   const {
@@ -58,9 +60,14 @@ function App() {
   const streak = currentStreak(tasks, today)
   const editingTask = tasks.find((task) => task.id === editingId) ?? null
   const sortedNotes = selectNotesNewestFirst(notes)
+  const viewingNote = notes.find((note) => note.id === viewingNoteId) ?? null
   const editingNote = notes.find((note) => note.id === editingNoteId) ?? null
-  const anySheetOpen =
-    captureOpen || editingTask !== null || noteCaptureOpen || editingNote !== null
+  const anyOverlayOpen =
+    captureOpen ||
+    editingTask !== null ||
+    noteCaptureOpen ||
+    viewingNote !== null ||
+    editingNote !== null
   const todayEmpty =
     overdueTasks.length === 0 &&
     dueTodayTasks.length === 0 &&
@@ -302,7 +309,12 @@ function App() {
             ) : (
               <ul className="note-list">
                 {sortedNotes.map((note) => (
-                  <NoteRow key={note.id} note={note} onEdit={setEditingNoteId} onDelete={deleteNoteById} />
+                  <NoteRow
+                    key={note.id}
+                    note={note}
+                    onOpen={setViewingNoteId}
+                    onDelete={deleteNoteById}
+                  />
                 ))}
               </ul>
             )}
@@ -313,7 +325,7 @@ function App() {
 
       {burst ? <Celebration burst={burst} /> : null}
 
-      {reminder.open && !anySheetOpen ? (
+      {reminder.open && !anyOverlayOpen ? (
         <ReminderBanner
           openCount={reminder.openCount}
           onReview={() => setTab('today')}
@@ -321,7 +333,7 @@ function App() {
         />
       ) : null}
 
-      {(tab === 'inbox' || tab === 'notes') && !anySheetOpen ? (
+      {(tab === 'inbox' || tab === 'notes') && !anyOverlayOpen ? (
         <button
           type="button"
           className="fab"
@@ -352,6 +364,14 @@ function App() {
 
       {noteCaptureOpen ? (
         <NoteSheet onSave={addNote} onClose={() => setNoteCaptureOpen(false)} />
+      ) : null}
+
+      {viewingNote ? (
+        <NoteView
+          note={viewingNote}
+          onEdit={setEditingNoteId}
+          onClose={() => setViewingNoteId(null)}
+        />
       ) : null}
 
       {editingNote ? (
