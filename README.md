@@ -84,17 +84,20 @@ reduced-motion backstop in `styles.css` disables the transition.
 
 ---
 
-## Look & feel: calm & mindful (M8)
+## Look & feel: Verdana Health (M8)
 
-Warm paper surfaces, deep ink text, saffron accent. The accent is the deep
-turmeric shade (`#b45309` light) rather than bright saffron because it
-doubles as the button background and must keep white text at 4.5:1.
+The interface follows the **Verdana Health** design system (reference:
+`design-md/verdana-health.md`). Navy and white form the primary visual rhythm,
+slate carries secondary text, and sage is reserved for interactive elements and
+positive states. The interactive sage is the deep `#047857` shade rather than
+`#059669` so small links keep 4.5:1 against white; `#059669` remains the
+decorative stroke (progress ring, orbs).
 
-Display type is **Fraunces**, self-hosted at `public/fonts/fraunces-*.woff2`
-(latin subset, weights 500/600, `@font-face` at the top of `styles.css`), so
-the PWA keeps its display type offline — the Google Fonts `<link>` in
-`index.html` only carries Inter and is not cached by `sw.js`. Georgia is the
-fallback stack.
+Body copy is **DM Sans**; display type is **Plus Jakarta Sans**. Both are
+self-hosted as latin variable subsets at `public/fonts/*-var.woff2`
+(`@font-face` at the top of `styles.css`), so the PWA keeps its type offline.
+The former Google Fonts `<link>` for Inter has been removed; `sw.js` caches the
+self-hosted fonts stale-while-revalidate like any other same-origin asset.
 
 The landing page's phone previews are hand-built lookalikes: when app styles
 change, re-sync the `.lp-preview-*` rules in `styles.css`.

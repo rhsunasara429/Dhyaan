@@ -34,10 +34,10 @@ meditation, attention, holding the mind on one thing.
 
 ## Color & Treatment
 
-- **Home-screen tile:** a **deep-turmeric → warmer gradient** (`#92440e` →
-  `#bf6010`) with a **white** mark, so the installed icon is bold on any
-  wallpaper. Mirrors the app's warm "calm & mindful" palette.
-- **Browser favicon:** saffron `#b45309` (light) / amber `#f59e0b` (dark) on
+- **Home-screen tile:** a **deep-navy → slate gradient** (`#0f172a` →
+  `#1e293b`) with a **white** mark, so the installed icon is bold on any
+  wallpaper. Mirrors the Verdana Health navy + white primary rhythm.
+- **Browser favicon:** sage `#047857` (light) / amber-sage `#34d399` (dark) on
   transparency.
 - **Monochrome (Android 13+ themed):** flat black silhouette.
 

@@ -37,16 +37,16 @@ const MARK = {
 };
 
 /* Light/dark accents, mirrored from --color-accent in src/styles.css.
- * Using the warm saffron/turmeric palette for a mindful, calm aesthetic.
- * The dark variant is for the dark-mode browser tab. */
-const LIGHT = '#b45309';  // Deep turmeric/saffron
-const DARK = '#f59e0b';   // Brighter amber for dark mode
+ * Verdana Health reserves sage for interactive marks; the installed tile
+ * uses the primary navy, with the sage mark for browser tabs. */
+const LIGHT = '#047857';  // Sage (AA-safe on white)
+const DARK = '#34d399';   // Brighter sage for dark mode
 
-/* The installed home-screen tile: a deep-turmeric -> warmer gradient with a
- * white mark, so the icon is bold and unmistakable on any wallpaper. Mirrors
- * the "calm & mindful" palette rather than introducing new hues. */
-const TILE_TOP = '#92440e';    // deep turmeric (top of gradient)
-const TILE_BOTTOM = '#bf6010'; // warmer turmeric (bottom of gradient)
+/* The installed home-screen tile: a deep-navy -> slate gradient with a
+ * white mark, so the icon is bold and unmistakable on any wallpaper and
+ * matches the navy + white rhythm of the Verdana Health system. */
+const TILE_TOP = '#0f172a';    // Primary navy (top of gradient)
+const TILE_BOTTOM = '#1e293b'; // Slate lift (bottom of gradient)
 
 /* Mark scale as a fraction of the canvas. The ring's outer edge sits at
  * 2*(40+3.6)/100 = 87.2% of the canvas width, so these are really just a
